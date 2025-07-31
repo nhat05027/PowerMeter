@@ -1,0 +1,22 @@
+# ninja log v5
+11	490	7756509721708121	CMakeFiles/PowerMeter.dir/Core/Src/stm32f0xx_it.c.obj	22e850b0b41c616
+48	500	7756509721608110	CMakeFiles/PowerMeter.dir/Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_rcc.c.obj	68f0eadba9772735
+80	510	7756509721708121	CMakeFiles/PowerMeter.dir/Core/Src/sysmem.c.obj	83e9f0c407d36615
+4	521	7756509721878516	CMakeFiles/PowerMeter.dir/Core/Src/main.c.obj	6f70703a47e0e9df
+37	569	7756509722248473	CMakeFiles/PowerMeter.dir/Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_usart.c.obj	ca6a58f5c20a82ef
+17	588	7756509722108453	CMakeFiles/PowerMeter.dir/Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_gpio.c.obj	1fd8e54c6b11866b
+29	625	7756509722305001	CMakeFiles/PowerMeter.dir/Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_exti.c.obj	ae5c0cb96a3e8639
+95	626	7756509722248473	CMakeFiles/PowerMeter.dir/startup_stm32f030x8.s.obj	c37a524654ecad83
+23	627	7756509722535375	CMakeFiles/PowerMeter.dir/Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_pwr.c.obj	21e220f81e9ace3c
+56	639	7756509723066440	CMakeFiles/PowerMeter.dir/Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_dma.c.obj	7884793d2a1a3d8e
+63	640	7756509722996468	CMakeFiles/PowerMeter.dir/Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_utils.c.obj	3003e77e71319285
+102	644	7756509723086439	CMakeFiles/PowerMeter.dir/App/Src/app.c.obj	b28c4a9152b9a02e
+88	652	7756509723296448	CMakeFiles/PowerMeter.dir/Core/Src/syscalls.c.obj	afcbc836f687f207
+72	669	7756509723525591	CMakeFiles/PowerMeter.dir/Core/Src/system_stm32f0xx.c.obj	82ae056589cbfc24
+492	792	7756509724806349	CMakeFiles/PowerMeter.dir/Utils/Scheduler/scheduler.c.obj	1b4a92846c0ac9da
+792	999	7756509726647287	PowerMeter.elf	cd13f91ad9b65ae5
+11	196	7756510891245104	CMakeFiles/PowerMeter.dir/Core/Src/stm32f0xx_it.c.obj	22e850b0b41c616
+5	212	7756510891441880	CMakeFiles/PowerMeter.dir/Core/Src/main.c.obj	6f70703a47e0e9df
+212	348	7756510892636135	PowerMeter.elf	cd13f91ad9b65ae5
+29	192	7756511336514910	CMakeFiles/PowerMeter.dir/App/Src/app.c.obj	b28c4a9152b9a02e
+192	333	7756511337761206	PowerMeter.elf	cd13f91ad9b65ae5

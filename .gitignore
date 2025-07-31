@@ -1,0 +1,84 @@
+# CMake build directories
+build/
+Build/
+builds/
+Builds/
+
+# CMake cache and generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+CTestTestfile.cmake
+install_manifest.txt
+Makefile
+
+# Ninja build files
+build.ninja
+rules.ninja
+.ninja_deps
+.ninja_log
+
+# Generated binaries and objects
+*.o
+*.obj
+*.elf
+*.bin
+*.hex
+*.map
+*.lst
+*.dis
+*.axf
+
+# IDE specific files
+.vscode/
+.vs/
+*.code-workspace
+
+# STM32CubeIDE/Eclipse specific
+.metadata/
+.project
+.cproject
+.settings/
+
+# Keil specific
+*.uvopt
+*.uvproj
+*.uvgui.*
+JLinkLog.txt
+DebugConfig/
+
+# IAR specific
+*.eww
+*.ewp
+*.ewd
+settings/
+Debug/
+Release/
+
+# OS specific
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.orig
+
+# STM32 specific
+*.jlink
+*.launch
+
+# Logs
+*.log
+
+# Package managers
+node_modules/
+.npm
+.yarn
+package-lock.json
+yarn.lock

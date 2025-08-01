@@ -30,8 +30,6 @@
 
 
 /* ----------------------- Static variables ---------------------------------*/
-static BOOL bTxEnabled = FALSE;
-
 /* ----------------------- static functions ---------------------------------*/
 //static void prvvUARTTxReadyISR( void );
 //static void prvvUARTRxISR( void );
@@ -135,6 +133,3 @@ static void prvvUARTRxISR( void )
 }
 */
 
-/* ----------------------- RS485 DE Control Function -----------------------*/
-// Simple DE control - PA5 pin
-// You can modify this section as needed

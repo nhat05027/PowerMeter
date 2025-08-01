@@ -36,15 +36,15 @@ BOOL
 xMBPortTimersInit( USHORT usTim1Timerout50us )
 {
   // LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM14);
-  LL_TIM_DisableCounter(TIMER_HANDLE);
-  LL_TIM_SetPrescaler(TIMER_HANDLE, (SystemCoreClock / 1000000UL) - 1);
+  LL_TIM_DisableCounter(MB_TIMER_HANDLE);
+  LL_TIM_SetPrescaler(MB_TIMER_HANDLE, (SystemCoreClock / 1000000UL) - 1);
   uint32_t autoreload = 50 * usTim1Timerout50us;
-  LL_TIM_SetAutoReload(TIMER_HANDLE, autoreload - 1);
-  LL_TIM_SetCounter(TIMER_HANDLE, 0);
-  LL_TIM_SetCounterMode(TIMER_HANDLE, LL_TIM_COUNTERMODE_UP);
-  LL_TIM_EnableIT_UPDATE(TIMER_HANDLE);
-  LL_TIM_DisableARRPreload(TIMER_HANDLE);
-  NVIC_SetPriority(TIM14_IRQn, 0);
+  LL_TIM_SetAutoReload(MB_TIMER_HANDLE, autoreload - 1);
+  LL_TIM_SetCounter(MB_TIMER_HANDLE, 0);
+  LL_TIM_SetCounterMode(MB_TIMER_HANDLE, LL_TIM_COUNTERMODE_UP);
+  LL_TIM_EnableIT_UPDATE(MB_TIMER_HANDLE);
+  LL_TIM_DisableARRPreload(MB_TIMER_HANDLE);
+  NVIC_SetPriority(MB_TIMER_IRQ, 0);
   return TRUE;
 }
 
@@ -53,17 +53,17 @@ inline void
 vMBPortTimersEnable(  )
 {
   /* Enable the timer with the timeout passed to xMBPortTimersInit( ) */
-  LL_TIM_SetCounter(TIMER_HANDLE, 0);
-  LL_TIM_ClearFlag_UPDATE(TIMER_HANDLE);
-  LL_TIM_EnableCounter(TIMER_HANDLE);  
+  LL_TIM_SetCounter(MB_TIMER_HANDLE, 0);
+  LL_TIM_ClearFlag_UPDATE(MB_TIMER_HANDLE);
+  LL_TIM_EnableCounter(MB_TIMER_HANDLE);
 }
 
 inline void
 vMBPortTimersDisable(  )
 {
   /* Disable any pending timers. */
-  LL_TIM_DisableCounter(TIMER_HANDLE);
-  LL_TIM_ClearFlag_UPDATE(TIMER_HANDLE);
+  LL_TIM_DisableCounter(MB_TIMER_HANDLE);
+  LL_TIM_ClearFlag_UPDATE(MB_TIMER_HANDLE);
 }
 
 /* Create an ISR which is called whenever the timer has expired. This function

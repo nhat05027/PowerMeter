@@ -13,12 +13,9 @@
 // INCLUDE TASK //
 
 // INCLUDE LIB //
-// #include "mb.h"
-// #include "user_mb_app.h"
-// #include "modbus_rs485.h"
+#include "modbus_rs485.h"
 
-// void App_Main(void);
-// void App_ModbusInit(void);
-// void App_ModbusTask(void *pvParameters);
+void App_Main(void);
+
 
 #endif /* APP_H_ */

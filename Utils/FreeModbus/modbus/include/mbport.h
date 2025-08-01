@@ -38,11 +38,7 @@ PR_BEGIN_EXTERN_C
 
 #include "port.h"
 /* ----------------------- Defines ------------------------------------------*/
-#define MB_UART_HANDLE       USART1
-#define MB_UART_IRQ          USART1_IRQn    
-#define MB_UART_DE_PORT      GPIOA
-#define MB_UART_DE_PIN       LL_GPIO_PIN_1
-#define TIMER_HANDLE        TIM14
+
 /* ----------------------- Type definitions ---------------------------------*/
 
 typedef enum

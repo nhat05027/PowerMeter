@@ -24,6 +24,7 @@
 
 #include "stm32f0xx.h"
 #include "mbconfig.h"
+#include "board.h"
 
 #include <assert.h>
 #include <inttypes.h>

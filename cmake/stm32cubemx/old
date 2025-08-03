@@ -29,6 +29,9 @@ target_include_directories(stm32cubemx INTERFACE
     ../../Drivers/CMSIS/Include
     ../../Utils/Scheduler
     ../../Utils/Spi
+    ../../Utils/Adc
+    ../../Utils/Delay
+    ../../Utils/Lcd
     ../../App/Inc
     ../../Utils/FreeModbus/modbus/include
     ../../Utils/FreeModbus/modbus/rtu
@@ -41,11 +44,13 @@ target_sources(stm32cubemx INTERFACE
     ../../Core/Src/main.c
     ../../Core/Src/stm32f0xx_it.c
     ../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_gpio.c
-    ../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_spi.c
+    ../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_adc.c
     ../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_dma.c
     ../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_rcc.c
     ../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_utils.c
     ../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_exti.c
+    ../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_i2c.c
+    ../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_spi.c
     ../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_pwr.c
     ../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_tim.c
     ../../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_usart.c
@@ -55,8 +60,16 @@ target_sources(stm32cubemx INTERFACE
     ../../startup_stm32f030x8.s
     ../../App/Src/app.c
     ../../App/Src/modbus_rs485.c
+    ../../App/Src/calculate_task.c
+    ../../App/Src/adc_task.c
+    ../../App/Src/lcd_ui.c
     ../../Utils/Scheduler/scheduler.c
     ../../Utils/Spi/spi.c
+    ../../Utils/Adc/adc.c
+    ../../Utils/Delay/delay.c
+    ../../Utils/Lcd/tg12864.c
+    ../../Utils/Lcd/font8x8.c
+    ../../Utils/Lcd/font5x7.c
     ../../Utils/FreeModbus/modbus/mb.c
     ../../Utils/FreeModbus/modbus/rtu/mbcrc.c
     ../../Utils/FreeModbus/modbus/rtu/mbrtu.c

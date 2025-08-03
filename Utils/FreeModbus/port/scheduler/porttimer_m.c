@@ -26,7 +26,6 @@
 #include "mb.h"
 #include "mb_m.h"
 #include "mbport.h"
-#include "tim.h"
 
 #if MB_MASTER_RTU_ENABLED > 0 || MB_MASTER_ASCII_ENABLED > 0
 /* ----------------------- Variables ----------------------------------------*/
@@ -37,16 +36,17 @@
 /* ----------------------- Start implementation -----------------------------*/
 BOOL xMBMasterPortTimersInit(USHORT usTimeOut50us)
 {
-    htim3.Instance = TIM3;
-    htim3.Init.Prescaler = (uint16_t)(SystemCoreClock/20000)-1;
-    htim3.Init.Period = usTimeOut50us;
-    htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-    htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-    if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
-    {
-      _Error_Handler(__FILE__, __LINE__);
-    }
-    return TRUE;
+    // LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM14);
+  LL_TIM_DisableCounter(MB_TIMER_HANDLE);
+  LL_TIM_SetPrescaler(MB_TIMER_HANDLE, (SystemCoreClock / 1000000UL) - 1);
+  uint32_t autoreload = 50 * usTim1Timerout50us;
+  LL_TIM_SetAutoReload(MB_TIMER_HANDLE, autoreload - 1);
+  LL_TIM_SetCounter(MB_TIMER_HANDLE, 0);
+  LL_TIM_SetCounterMode(MB_TIMER_HANDLE, LL_TIM_COUNTERMODE_UP);
+  LL_TIM_EnableIT_UPDATE(MB_TIMER_HANDLE);
+  LL_TIM_DisableARRPreload(MB_TIMER_HANDLE);
+  NVIC_SetPriority(MB_TIMER_IRQ, 0);
+  return TRUE;
 }
 
 void vMBMasterPortTimersT35Enable()

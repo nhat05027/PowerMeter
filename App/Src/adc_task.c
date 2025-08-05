@@ -4,26 +4,20 @@
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Defines ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 #define ADC_CHANNEL_COUNT    7  // Bao gồm ADC0 (offset) và ADC1-6
-// #define MAX_SAMPLE_COUNT     80 // Tối đa 100 mẫu mỗi kênh
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Prototype ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-void ADC_Reset_Samples(void);
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 static uint8_t  ADC_channel_index = 0;
-static uint16_t ADC_Value[ADC_CHANNEL_COUNT] = {0};
-static uint16_t ADC_Sample_Index = 0;
-static uint16_t ADC0_Offset = 0;
+static uint16_t ADC0_Offset = 2048;
 
 static bool is_ADC_read_completed = false;
 
-float RMS_Sum_Square[6] = {0}; // Lưu tổng bình phương lũy tiến
-
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+int32_t RMS_Sum_Square[6] = {0};
 uint16_t g_Readvalue[ADC_CHANNEL_COUNT] = {0};
-int16_t  g_ADC_Samples[6][MAX_SAMPLE_COUNT] = {0}; // Mảng lưu tối đa 100 mẫu/kênh, hỗ trợ số âm
+int16_t  g_ADC_Samples[6][MAX_SAMPLE_COUNT] = {0}; // Mảng lưu tối đa 80 mẫu/kênh, hỗ trợ số âm
 uint16_t g_Sample_Count = 0; // Biến đếm số mẫu thực tế
-float g_RMS_Value[6] = {0}; // Kết quả RMS
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* :::::::::: ADC Task Init :::::::: */
@@ -58,35 +52,32 @@ void ADC_Task_IRQHandler(void)
         is_ADC_read_completed = true;
         LL_ADC_ClearFlag_EOC(ADC_FEEDBACK_HANDLE);
 
-        ADC_Value[ADC_channel_index] = LL_ADC_REG_ReadConversionData12(ADC_FEEDBACK_HANDLE);
-        g_Readvalue[ADC_channel_index] = 
-            __LL_ADC_CALC_DATA_TO_VOLTAGE(3300, ADC_Value[ADC_channel_index], LL_ADC_RESOLUTION_12B);
+        g_Readvalue[ADC_channel_index] = LL_ADC_REG_ReadConversionData12(ADC_FEEDBACK_HANDLE);
 
         // Lưu giá trị offset từ ADC0 (Neutral)
         if (ADC_channel_index == 0)
         {
-            ADC0_Offset = g_Readvalue[0];
+            ADC0_Offset = (int16_t)g_Readvalue[0];
         }
         // Lưu giá trị đã trừ offset cho ADC1-6 và tính lũy tiến RMS
         else
         {
-            if (ADC_Sample_Index < MAX_SAMPLE_COUNT) // Giới hạn kích thước mảng
+            if (g_Sample_Count < MAX_SAMPLE_COUNT) // Giới hạn kích thước mảng
             {
                 uint8_t channel = ADC_channel_index - 1;
                 // Lưu giá trị sau khi trừ offset, cho phép số âm
-                int16_t sample = (int16_t)g_Readvalue[ADC_channel_index] - (int16_t)ADC0_Offset;
-                g_ADC_Samples[channel][ADC_Sample_Index] = sample;
+                int16_t sample = (int16_t)g_Readvalue[ADC_channel_index] - ADC0_Offset;
+                g_ADC_Samples[channel][g_Sample_Count] = sample;
 
                 // Cập nhật lũy tiến cho RMS
-                RMS_Sum_Square[channel] += (float)(sample * sample);
+                RMS_Sum_Square[channel] += (int32_t)(sample) * (int32_t)(sample);
             }
         }
 
-        if (ADC_channel_index >= (ADC_CHANNEL_COUNT - 1))
+        if (ADC_channel_index >= 6)
         {
             ADC_channel_index = 0;
-            ADC_Sample_Index++;
-            g_Sample_Count = ADC_Sample_Index; // Cập nhật số mẫu thực tế
+            g_Sample_Count++;
         }
         else
         {
@@ -100,14 +91,8 @@ void ADC_Reset_Samples(void)
 {
     for (uint8_t i = 0; i < 6; i++)
     {
-        for (uint16_t j = 0; j < MAX_SAMPLE_COUNT; j++)
-        {
-            g_ADC_Samples[i][j] = 0;
-        }
         RMS_Sum_Square[i] = 0;
-        // g_RMS_Value[i] = 0;
     }
-    ADC_Sample_Index = 0;
     g_Sample_Count = 0;
 }
 

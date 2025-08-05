@@ -39,7 +39,7 @@ BOOL xMBMasterPortTimersInit(USHORT usTimeOut50us)
     // LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM14);
   LL_TIM_DisableCounter(MB_TIMER_HANDLE);
   LL_TIM_SetPrescaler(MB_TIMER_HANDLE, (SystemCoreClock / 1000000UL) - 1);
-  uint32_t autoreload = 50 * usTim1Timerout50us;
+  uint32_t autoreload = 50 * usTimeOut50us;
   LL_TIM_SetAutoReload(MB_TIMER_HANDLE, autoreload - 1);
   LL_TIM_SetCounter(MB_TIMER_HANDLE, 0);
   LL_TIM_SetCounterMode(MB_TIMER_HANDLE, LL_TIM_COUNTERMODE_UP);

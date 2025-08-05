@@ -17,6 +17,8 @@
 #include "button_handler.h"
 
 // INCLUDE TASK //
+#include "adc_task.h"
+#include "calculate_task.h"
 
 // INCLUDE LIB //
 #include "modbus_rs485.h"

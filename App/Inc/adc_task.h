@@ -8,13 +8,13 @@
 #include "adc.h"
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Defines ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-#define MAX_SAMPLE_COUNT 80
+#define MAX_SAMPLE_COUNT 100
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Types ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 extern uint16_t g_Readvalue[ADC_CHANNEL_COUNT];
 extern int16_t  g_ADC_Samples[6][MAX_SAMPLE_COUNT];
 extern uint16_t g_Sample_Count;
-extern float RMS_Sum_Square[6];
+extern int32_t RMS_Sum_Square[6];
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Enum ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Struct ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -25,6 +25,8 @@ void ADC_Task_Init(uint32_t Sampling_Time);
 
 /* :::::::::: ADC Task ::::::::::::: */
 void ADC_Task(void*);
+/* :::::::::: ADC Reset Samples :::::::: */
+void ADC_Reset_Samples(void);
 
 /* :::::::::: ADC Interupt Handler ::::::::::::: */
 void ADC_Task_IRQHandler(void);

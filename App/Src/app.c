@@ -22,7 +22,6 @@ TG12864_Handle LCD = {
     },
 };
 
-static void Status_Led(void *pvParameters);
 static void App_ModbusTask(void *pvParameters);
 static void App_UITask(void *pvParameters);
 static void App_ButtonTask(void *pvParameters);
@@ -33,11 +32,11 @@ uint32_t        g_ui32SchedulerNumTasks = SCHEDULER_TASK_COUNT;
 tSchedulerTask 	g_psSchedulerTable[SCHEDULER_TASK_COUNT] =
                 {
                     {
-                        &Status_Led,
+                        &ADC_Task,
                         (void *) 0,
-                        10000,                        //call every 1000ms (1Hz)
-                        0,                          //count from start
-                        true                        //is active
+                        10,                          //call every 500us
+                        0,			                //count from start
+                        true		                //is active
                     },
                     {
                         &App_ModbusTask,
@@ -67,6 +66,11 @@ void App_Main(void)
     // Initialize Modbus slave
     App_ModbusInit();
     Modbus_RS485_Init();
+    // Initialize ADC task
+    // Use 7.5 cycles sampling time for faster response
+    ADC_Task_Init(LL_ADC_SAMPLINGTIME_7CYCLES_5);
+    Calculate_Task_Init();
+
     // Initialize scheduler 
     SchedulerInit(10000);  // 10000 ticks per second = 0.1ms per tick
     // Initialize LCD
@@ -163,11 +167,6 @@ void App_ModbusTask(void *pvParameters)
 //     }
 // }
 
-static void Status_Led(void *pvParameters)
-{
-    // Default: blink LED to show system is alive
-    LL_GPIO_TogglePin(LED_PORT, LED_PIN);
-}
 
 static void App_UITask(void *pvParameters)
 {

@@ -33,8 +33,8 @@ void Delay_US(uint32_t delay_time_us)
     #ifdef DELAY_USE_SYSTICK
         delay_update_flag = 0;
         /*
-        * Do ham HAL_SYSTICK_config luon mac dinh lay clock la AHB khong chia cho 8
-        * nen, T = 1 / 8*10^6 = 1.25*10^-7, de co tick cho 1us thi SysTick_load = 1*10^-6/1.25*10-7 = 8
+        * The HAL_SYSTICK_Config function by default uses the AHB clock without division by 8.
+        * Therefore, T = 1 / 8*10^6 = 1.25*10^-7, so to get a tick for 1us, SysTick_load = 1*10^-6/1.25*10^-7 = 8
         */
         uint32_t systick_load = delay_time_us * 8;
         HAL_SYSTICK_Config(systick_load);
@@ -56,8 +56,8 @@ void Delay_MS(uint32_t delay_time_ms)
     #ifdef DELAY_USE_SYSTICK
         delay_update_flag = 0;
         /*
-        * Do ham HAL_SYSTICK_config luon mac dinh lay clock la AHB khong chia cho 8
-        * nen, T = 1 / 8*10^6 = 1.25*10^-7, de co tick cho 1ms thi SysTick_load = 1*10^-3/1.25*10-7 = 8000
+        * The HAL_SYSTICK_Config function by default uses the AHB clock without division by 8.
+        * Therefore, T = 1 / 8*10^6 = 1.25*10^-7, so to get a tick for 1ms, SysTick_load = 1*10^-3/1.25*10^-7 = 8000
         */
         uint32_t systick_load = delay_time_ms * 8000;
         HAL_SYSTICK_Config(systick_load);

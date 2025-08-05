@@ -502,8 +502,7 @@ static void UI_HandleLongPress(uint8_t button)
         case BUTTON_UP:
         case BUTTON_DOWN:
         case BUTTON_SELECT:
-            // For other buttons, long press has no action (ignore)
-            // You can add long press actions for other buttons here if needed
+            LL_GPIO_TogglePin(RELAY_PORT, RELAY_PIN); // Blink LED to indicate long press
             break;
             
         default:

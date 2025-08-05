@@ -154,7 +154,7 @@ void TG12864_DrawChar_Font(TG12864_Handle* lcd, uint8_t x, uint8_t page, char c,
 void TG12864_DrawString_Font(TG12864_Handle* lcd, uint8_t x, uint8_t page, const char* str, const TG12864_Font* font) {
     while (*str) {
         TG12864_DrawChar_Font(lcd, x, page, *str, font);
-        x += font->width + 1;  // +1 để cách ký tự
+        x += font->width + 1;  // +1 for character spacing
         str++;
     }
 }

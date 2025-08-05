@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 typedef struct {
-    const uint8_t* data;      // con trỏ tới mảng bitmap font
+    const uint8_t* data;      // pointer to the font bitmap array
     uint8_t width;            // chiều rộng mỗi ký tự
     uint8_t height;           // chiều cao mỗi ký tự
     uint8_t first_char;       // mã ASCII ký tự đầu tiên hỗ trợ

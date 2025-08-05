@@ -4,7 +4,6 @@
 
 // Button state variables
 static uint8_t g_button_state[BUTTON_COUNT] = {0};
-static uint8_t g_button_last_state[BUTTON_COUNT] = {0};
 static uint32_t g_button_press_time[BUTTON_COUNT] = {0};
 static uint8_t g_button_press_flag[BUTTON_COUNT] = {0};  // Flag to track if button press was recorded
 static uint32_t g_button_tick_counter = 0;
@@ -15,7 +14,7 @@ static uint8_t g_queue_head = 0;
 static uint8_t g_queue_tail = 0;
 static uint8_t g_queue_count = 0;
 
-// Long press threshold (in ticks) - 10 ticks = 1000ms at 10ms per tick
+// Long press threshold (in ticks) - 100 ticks = 1000ms at 10ms per tick
 #define BUTTON_LONG_PRESS_THRESHOLD    10
 
 // Queue helper functions
@@ -60,7 +59,6 @@ void Button_Init(void)
     for (uint8_t i = 0; i < BUTTON_COUNT; i++)
     {
         g_button_state[i] = 0;
-        g_button_last_state[i] = 0;
         g_button_press_time[i] = 0;
         g_button_press_flag[i] = 0;
     }
@@ -127,49 +125,52 @@ void Button_Scan(void)
     
     for (uint8_t i = 0; i < BUTTON_COUNT; i++)
     {
-        uint8_t current_state = Button_Read(i);
-        
-        // Update state
-        g_button_last_state[i] = g_button_state[i];
-        g_button_state[i] = current_state;
+        // Read current button state directly
+        g_button_state[i] = Button_Read(i);
     }
 }
 
-// Process button events and set flags
+// Process button events based on press/release state
 void Button_Process(void)
 {
     for (uint8_t i = 0; i < BUTTON_COUNT; i++)
     {
-        // Check if button just pressed (transition from LOW to HIGH after inversion)
-        if (g_button_state[i] && !g_button_last_state[i] && !g_button_press_flag[i])
+        // Nếu nút đang được nhấn (HIGH - đã invert trong Button_Read)
+        if (g_button_state[i])
         {
-            // Button just pressed - record time and set press flag
-            g_button_press_time[i] = g_button_tick_counter;
-            g_button_press_flag[i] = 1;
-        }
-        // Check if button is still pressed and enough time has passed for long press
-        else if (g_button_state[i] && g_button_press_flag[i])
-        {
-            uint32_t delta_time = g_button_tick_counter - g_button_press_time[i];
-            
-            // If long press threshold reached, trigger long press immediately
-            if (delta_time >= BUTTON_LONG_PRESS_THRESHOLD)
+            // Nếu chưa ghi nhận press, bắt đầu ghi nhận
+            if (!g_button_press_flag[i])
             {
-                Button_QueuePut(i, BUTTON_EVENT_LONG_PRESS);
-                // Reset press flag to prevent multiple triggers
+                g_button_press_time[i] = g_button_tick_counter;
+                g_button_press_flag[i] = 1;
+            }
+            // Nếu đã ghi nhận press, kiểm tra long press
+            else
+            {
+                uint32_t delta_time = g_button_tick_counter - g_button_press_time[i];
+                
+                // Nếu đủ thời gian long press, trigger long press
+                if (delta_time >= BUTTON_LONG_PRESS_THRESHOLD)
+                {
+                    Button_QueuePut(i, BUTTON_EVENT_LONG_PRESS);
+                    // Reset flag để không trigger lại
+                    g_button_press_flag[i] = 0;
+                    g_button_press_time[i] = 0;
+                }
+            }
+        }
+        // Nếu nút không được nhấn (LOW - released)
+        else
+        {
+            // Nếu trước đó có press được ghi nhận, đây là release = short press
+            if (g_button_press_flag[i])
+            {
+                Button_QueuePut(i, BUTTON_EVENT_SHORT_PRESS);
+                
+                // Reset flag để bắt đầu cycle mới
                 g_button_press_flag[i] = 0;
                 g_button_press_time[i] = 0;
             }
-        }
-        // Check if button was released and we had recorded a press
-        else if (!g_button_state[i] && g_button_last_state[i] && g_button_press_flag[i])
-        {
-            // Button was released - this is a short press
-            Button_QueuePut(i, BUTTON_EVENT_SHORT_PRESS);
-            
-            // Reset press flag to start next cycle
-            g_button_press_flag[i] = 0;
-            g_button_press_time[i] = 0;
         }
     }
 }

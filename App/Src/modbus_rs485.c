@@ -7,6 +7,7 @@ void Modbus_RS485_Init(void)
 {
     LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
     
+    // RS485 DE pin
     GPIO_InitStruct.Pin = MB_UART_DE_PIN;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
     GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;
@@ -47,24 +48,18 @@ void App_ModbusInit(void)
         return;
     }
     
-    // Initialize system information in holding registers
-    usSRegHoldBuf[0] = 0x1234;  // Example data 1
-    usSRegHoldBuf[1] = 0x5678;  // Example data 2  
-    usSRegHoldBuf[2] = 0x9ABC;  // Example data 3
-    usSRegHoldBuf[3] = 0x0000;  // Live counter (will be updated)
-    usSRegHoldBuf[4] = 0x0001;  // Firmware version major
-    usSRegHoldBuf[5] = 0x0000;  // Firmware version minor
-    
-    // Initialize input registers with system status
-    usSRegInBuf[0] = 0x1111;    // System status 1
-    usSRegInBuf[1] = 0x2222;    // System status 2
-    usSRegInBuf[2] = 0x3333;    // System status 3
-    usSRegInBuf[3] = 0x0000;    // Live counter x2 (will be updated)
-    usSRegInBuf[4] = (uint16_t)(SystemCoreClock / 1000000); // System clock in MHz
-    usSRegInBuf[5] = 0x0030;    // MCU type identifier (STM32F030)
-    
+    // Initialize holding registers (firmware version, etc.)
+    usSRegHoldBuf[0] = 0x0001;  // Firmware version major
+    usSRegHoldBuf[1] = 0x0000;  // Firmware version minor
+
+    // Clear measurement input registers range used by App_ModbusTask (10..49)
+    for (uint16_t addr = 10; addr <= 49 && addr < S_REG_INPUT_NREGS; addr++) {
+        usSRegInBuf[addr] = 0;
+    }
+
     // Initialize coils (all off by default)
-    ucSCoilBuf[0] = 0x00;       // LED control and other coils
+    // Coil 0 controls RELAY: 1=ON, 0=OFF
+    ucSCoilBuf[0] = 0x00;
 }
 
 
@@ -82,7 +77,8 @@ void Modbus_UART_IRQHandler(void)
   // Handle TX interrupt
   if (LL_USART_IsActiveFlag_TXE(MB_UART_HANDLE) && LL_USART_IsEnabledIT_TXE(MB_UART_HANDLE))
   {
-    // LL_GPIO_SetOutputPin(MB_UART_DE_PORT, MB_UART_DE_PIN);
+    // Ensure RS485 driver enabled for TX
+    LL_GPIO_SetOutputPin(MB_UART_DE_PORT, MB_UART_DE_PIN);
 #if MB_SLAVE_RTU_ENABLED > 0 || MB_SLAVE_ASCII_ENABLED > 0 
     pxMBFrameCBTransmitterEmpty();
 #endif
@@ -92,7 +88,7 @@ void Modbus_UART_IRQHandler(void)
   // Handle TC interrupt (transmission complete)
   if (LL_USART_IsActiveFlag_TC(MB_UART_HANDLE) && LL_USART_IsEnabledIT_TC(MB_UART_HANDLE))
   {
-    // Đã truyền xong byte cuối, chuyển DE về RX mode
+    // Done sending last byte, switch DE back to RX mode
     LL_GPIO_ResetOutputPin(MB_UART_DE_PORT, MB_UART_DE_PIN);
     LL_USART_ClearFlag_TC(MB_UART_HANDLE);
     LL_USART_DisableIT_TC(MB_UART_HANDLE);

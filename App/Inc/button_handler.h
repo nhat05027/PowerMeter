@@ -41,10 +41,5 @@ void Button_Process(void);
 uint8_t Button_GetEvent(button_event_queue_item_t *event);
 uint8_t Button_IsQueueEmpty(void);
 
-// Event flag functions
-uint8_t Button_GetShortPressFlag(uint8_t button);
-uint8_t Button_GetLongPressFlag(uint8_t button);
-void Button_ClearShortPressFlag(uint8_t button);
-void Button_ClearLongPressFlag(uint8_t button);
 
 #endif // BUTTON_HANDLER_H

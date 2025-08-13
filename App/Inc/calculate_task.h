@@ -10,11 +10,21 @@
 #include "adc_task.h"
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Defines ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-#define MINIMUM_SAMPLE 60
-// #define GPIO_TRIGGER_PIN        LL_GPIO_PIN_1 // Thay X bằng số pin cụ thể
-// #define GPIO_TRIGGER_PORT      GPIOB         // Thay X bằng port cụ thể (A, B, C,...)
-#define TIMER_HANDLE      TIM16        // Thay X bằng port cụ thể (A, B, C,...)
-#define TIMER_FREQ_HZ          320000        // Timer chạy ở 320kHz (Prescaler = 100)
+#define MINIMUM_SAMPLE 100
+#define TIMER_HANDLE      TIM16        
+#define TIMER_FREQ_HZ          320000.0f * 0.986f      // Timer chạy ở 310kHz (Prescaler = 100)
+
+#define Voltage_Alpha_Coeff   0.242505f * 1.05f// Vrms * 3.3/(3.3+660+330) * 4096/3.3 = ADC value
+#define Current_Alpha_Coeff   0.00304f // Irms * 1/2000 * (200+330) * 4096/3.3 = ADC value
+#define Voltage_Beta_Coeff    0.0f
+#define Current_Beta_Coeff    0.0f
+
+#define Voltage_Transform_Ratio  1.0f
+#define Current_Transform_Ratio  1.0f
+
+// Phase detection timing constants
+#define PHASE_TIMEOUT_CYCLES    5     // Phase timeout in scheduler cycles (no ZCD = no voltage)
+#define PHASE_DETECTION_WINDOW  50     // Detection window for current leading/lagging (in timer ticks)
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Types ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 extern float g_RMS_Value[6];
@@ -23,6 +33,10 @@ extern float g_Active_Power[3]; // Active Power for 3 phases (W)
 extern float g_Reactive_Power[3]; // Reactive Power for 3 phases (VAR)
 extern float g_Apparent_Power[3]; // Apparent Power for 3 phases (VA)
 extern float g_Power_Factor[3]; // Power Factor for 3 phases
+
+// Phase status flags for zero crossing detection
+extern uint8_t g_Phase_Active[3]; // Phase activity status (0=no voltage, 1=active)
+extern uint8_t g_Phase_Leading[3]; // Phase relationship (0=lagging, 1=leading)
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Enum ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Struct ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Class ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -33,10 +47,18 @@ void Calculate_Task_Init(void);
 
 /* :::::::::: Interupt Handler ::::::::::::: */
 void Calculate_Freq(void);
-void Calculate_Active_Power(void);            // Deprecated - use Calculate_All_Power_Parameters
-void Calculate_Reactive_Power(void);          // Deprecated - use Calculate_All_Power_Parameters  
-void Calculate_Power_Factor(void);            // Deprecated - use Calculate_All_Power_Parameters
 void Calculate_All_Power_Parameters(void);    // Optimized integrated calculation task
+
+/* :::::::::: Phase Detection Functions (for GPIO ZCD interrupts) ::::::::::::: */
+void Phase_L1_ZCD_Handler(void);  // Call this in L1 zero crossing interrupt
+void Phase_L2_ZCD_Handler(void);  // Call this in L2 zero crossing interrupt  
+void Phase_L3_ZCD_Handler(void);  // Call this in L3 zero crossing interrupt
+
+/* :::::::::: Phase Status Functions ::::::::::::: */
+void Reset_Phase_Status(void);
+uint8_t Get_Phase_Active_Status(uint8_t phase);
+uint8_t Get_Phase_Leading_Status(uint8_t phase);
+void Check_Phase_Timeouts(void *pvParameters); // Call this periodically to check for phase timeouts
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ End of the program ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
 #endif /* CALCULATE_TASK_H_ */

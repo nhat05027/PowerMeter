@@ -7,11 +7,13 @@
 #include "button_handler.h"
 
 // UI Constants
-#define UI_PAGE_COUNT           4
+#define UI_PAGE_COUNT           6
 #define UI_VOLTAGE_PAGE         0
 #define UI_CURRENT_PAGE         1
 #define UI_POWER_PAGE           2
-#define UI_STATUS_PAGE          3
+#define UI_REACTIVE_PAGE        3
+#define UI_APPARENT_PAGE        4
+#define UI_STATUS_PAGE          5
 
 // Display Areas
 #define UI_TITLE_ROW            0
@@ -24,6 +26,8 @@ typedef struct {
     float current_rms[3];    // I1, I2, I3 RMS currents  
     float power_active[3];   // P1, P2, P3 Active power
     float power_reactive[3]; // Q1, Q2, Q3 Reactive power
+    float power_apparent[3]; // S1, S2, S3 Apparent power
+    float power_factor[3];   // PF1, PF2, PF3 Power factor
     float frequency;         // System frequency
     uint8_t status;          // System status flags
 } ui_power_data_t;
@@ -47,6 +51,8 @@ uint8_t UI_GetBacklight(void);
 void UI_ShowVoltagePage(void);
 void UI_ShowCurrentPage(void);
 void UI_ShowPowerPage(void);
+void UI_ShowReactivePage(void);
+void UI_ShowApparentPage(void);
 void UI_ShowStatusPage(void);
 
 // Utility functions

@@ -10,7 +10,7 @@ static void UI_HandleLongPress(uint8_t button);
 static TG12864_Handle *g_lcd = NULL;
 static uint8_t g_current_page = UI_VOLTAGE_PAGE;
 static ui_power_data_t g_power_data = {0};
-static uint8_t g_auto_page_mode = 1;  // Auto page switching enabled by default
+static uint8_t g_auto_page_mode = 0;  // Auto page switching enabled by default
 static uint8_t g_backlight_enabled = 1;  // Backlight enabled by default
 
 // Initialize UI system
@@ -71,6 +71,12 @@ void UI_Refresh(void)
             break;
         case UI_POWER_PAGE:
             UI_ShowPowerPage();
+            break;
+        case UI_REACTIVE_PAGE:
+            UI_ShowReactivePage();
+            break;
+        case UI_APPARENT_PAGE:
+            UI_ShowApparentPage();
             break;
         case UI_STATUS_PAGE:
             UI_ShowStatusPage();
@@ -540,4 +546,75 @@ void UI_SetBacklight(uint8_t enable)
 uint8_t UI_GetBacklight(void)
 {
     return g_backlight_enabled;
+}
+
+// Show reactive power page
+void UI_ShowReactivePage(void)
+{
+    char buffer[32];
+    
+    // Title
+    TG12864_DrawString_Font(g_lcd, 0, UI_TITLE_ROW, "Reactive Power (VAR)", &Font5x7);
+    
+    // Phase data
+    for (uint8_t phase = 0; phase < 3; phase++)
+    {
+        uint8_t row = UI_DATA_START_ROW + (phase * UI_PHASE_HEIGHT);
+        
+        // Phase label (L1, L2, L3)
+        TG12864_DrawString_Font(g_lcd, 0, row, (phase == 0) ? "L1:" : (phase == 1) ? "L2:" : "L3:", &Font5x7);
+        
+        // Reactive power value
+        UI_FloatToString(g_power_data.power_reactive[phase], buffer, 2);
+        TG12864_DrawString_Font(g_lcd, 25, row, buffer, &Font5x7);
+        TG12864_DrawString_Font(g_lcd, 80, row, "VAR", &Font5x7);
+    }
+    
+    // Auto/Manual mode indicator
+    if (g_auto_page_mode)
+    {
+        TG12864_DrawString_Font(g_lcd, 100, 7, "AUTO", &Font5x7);
+    }
+    else
+    {
+        TG12864_DrawString_Font(g_lcd, 100, 7, "MAN", &Font5x7);
+    }
+}
+
+// Show apparent power page
+void UI_ShowApparentPage(void)
+{
+    char buffer[32];
+    
+    // Title
+    TG12864_DrawString_Font(g_lcd, 0, UI_TITLE_ROW, "Apparent Power (VA)", &Font5x7);
+
+    // Phase data
+    for (uint8_t phase = 0; phase < 3; phase++)
+    {
+        uint8_t row = UI_DATA_START_ROW + (phase * UI_PHASE_HEIGHT);
+        
+        // Phase label (L1, L2, L3)
+        TG12864_DrawString_Font(g_lcd, 0, row, (phase == 0) ? "L1:" : (phase == 1) ? "L2:" : "L3:", &Font5x7);
+
+        // Apparent power value
+        UI_FloatToString(g_power_data.power_apparent[phase], buffer, 2);
+        TG12864_DrawString_Font(g_lcd, 25, row, buffer, &Font5x7);
+        TG12864_DrawString_Font(g_lcd, 80, row, "VA", &Font5x7);
+
+        // Power factor on same line
+        UI_FloatToString(g_power_data.power_factor[phase], buffer, 3);
+        TG12864_DrawString_Font(g_lcd, 0, row + 1, "PF:", &Font5x7);
+        TG12864_DrawString_Font(g_lcd, 25, row + 1, buffer, &Font5x7);
+    }
+    
+    // Auto/Manual mode indicator
+    if (g_auto_page_mode)
+    {
+        TG12864_DrawString_Font(g_lcd, 100, 7, "AUTO", &Font5x7);
+    }
+    else
+    {
+        TG12864_DrawString_Font(g_lcd, 100, 7, "MAN", &Font5x7);
+    }
 }

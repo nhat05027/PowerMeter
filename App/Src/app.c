@@ -27,14 +27,14 @@ static void App_UITask(void *pvParameters);
 static void App_ButtonTask(void *pvParameters);
 
 
-#define         SCHEDULER_TASK_COUNT  4
+#define         SCHEDULER_TASK_COUNT  5
 uint32_t        g_ui32SchedulerNumTasks = SCHEDULER_TASK_COUNT;
 tSchedulerTask 	g_psSchedulerTable[SCHEDULER_TASK_COUNT] =
                 {
                     {
                         &ADC_Task,
                         (void *) 0,
-                        10,                          //call every 500us
+                        20,                          //call every 500us
                         0,			                //count from start
                         true		                //is active
                     },
@@ -56,6 +56,13 @@ tSchedulerTask 	g_psSchedulerTable[SCHEDULER_TASK_COUNT] =
                         &App_ButtonTask,
                         (void *) 0,
                         1000,                         //call every 100ms (10Hz) - Button scan
+                        0,                          //count from start
+                        true                        //is active
+                    },
+                    {
+                        &Check_Phase_Timeouts,
+                        (void *) 0,
+                        10000,                         //call every 1000ms (1Hz) - Phase timeout check
                         0,                          //count from start
                         true                        //is active
                     },
@@ -82,18 +89,6 @@ void App_Main(void)
     // Initialize UI system
     UI_Init(&LCD);
     
-    // Create sample data for testing
-    ui_power_data_t test_data = {
-        .voltage_rms = {220.15f, 219.87f, 221.32f},
-        .current_rms = {12.45f, 11.98f, 12.67f},
-        .power_active = {2743.3f, 2635.1f, 2801.8f},
-        .power_reactive = {456.7f, 432.1f, 478.9f},
-        .frequency = 50.0f,
-        .status = 0x01  // System OK
-    };
-    
-    // Update UI with test data
-    UI_UpdateData(&test_data);
 
     while (1)
     {
@@ -102,6 +97,16 @@ void App_Main(void)
 }
 
 
+static inline void MB_WriteFloatInput(uint16_t addr, float value)
+{
+    union { float f; uint16_t w[2]; } u;
+    u.f = value;
+    if ((addr + 1) < S_REG_INPUT_NREGS) {
+        usSRegInBuf[addr]     = u.w[0]; // low word
+        usSRegInBuf[addr + 1] = u.w[1]; // high word
+    }
+}
+
 void App_ModbusTask(void *pvParameters)
 {
     // Suppress unused parameter warning
@@ -109,63 +114,72 @@ void App_ModbusTask(void *pvParameters)
     
     // Poll Modbus stack - this must be called regularly
     (void)eMBPoll();
-    
-    // Update live data registers
-    static uint16_t counter = 0;
-    static uint32_t uptime_seconds = 0;
-    static uint16_t task_call_count = 0;
-    
-    counter++;
-    task_call_count++;
-    
-    // Update every second (200 calls at 5ms = 1 second)
-    if (task_call_count >= 200)
-    {
-        task_call_count = 0;
-        uptime_seconds++;
-    }
-    
-    // Update holding register with a counter (address 3)
-    usSRegHoldBuf[3] = counter;
-    
-    // Update input register with live data
-    usSRegInBuf[3] = counter * 2;
-    
-    // Update uptime in input registers (addresses 6-7 for 32-bit value)
-    if (S_REG_INPUT_NREGS > 7)
-    {
-        usSRegInBuf[6] = (uint16_t)(uptime_seconds & 0xFFFF);        // Low word
-        usSRegInBuf[7] = (uint16_t)((uptime_seconds >> 16) & 0xFFFF); // High word
-    }
-    
-    // Reset counter to prevent overflow
-    if (counter >= 65535)
-    {
-        counter = 0;
+
+    // ---------------- Publish 3-phase measurements over Modbus Input Registers ----------------
+    // Mapping (all as IEEE-754 float, 2 registers each, low word first):
+    // 10-11: L1 Vrms, 12-13: L2 Vrms, 14-15: L3 Vrms
+    // 16-17: L1 Irms, 18-19: L2 Irms, 20-21: L3 Irms
+    // 22-23: L1 P (W), 24-25: L2 P, 26-27: L3 P
+    // 28-29: L1 Q (VAR), 30-31: L2 Q, 32-33: L3 Q
+    // 34-35: L1 S (VA), 36-37: L2 S, 38-39: L3 S
+    // 40-41: L1 PF, 42-43: L2 PF, 44-45: L3 PF
+    // 46-47: Frequency (Hz)
+    // 48   : Phase Active bitmap (bit0=L1, bit1=L2, bit2=L3)
+    // 49   : Phase Leading bitmap (bit0=L1, bit1=L2, bit2=L3)
+
+    // Voltages (channels mapped in calculate_task.c)
+    MB_WriteFloatInput(10, g_RMS_Value[3]); // L1 V
+    MB_WriteFloatInput(12, g_RMS_Value[4]); // L2 V
+    MB_WriteFloatInput(14, g_RMS_Value[5]); // L3 V
+
+    // Currents
+    MB_WriteFloatInput(16, g_RMS_Value[2]); // L1 I
+    MB_WriteFloatInput(18, g_RMS_Value[1]); // L2 I
+    MB_WriteFloatInput(20, g_RMS_Value[0]); // L3 I
+
+    // Active Power P
+    MB_WriteFloatInput(22, g_Active_Power[0]);
+    MB_WriteFloatInput(24, g_Active_Power[1]);
+    MB_WriteFloatInput(26, g_Active_Power[2]);
+
+    // Reactive Power Q
+    MB_WriteFloatInput(28, g_Reactive_Power[0]);
+    MB_WriteFloatInput(30, g_Reactive_Power[1]);
+    MB_WriteFloatInput(32, g_Reactive_Power[2]);
+
+    // Apparent Power S
+    MB_WriteFloatInput(34, g_Apparent_Power[0]);
+    MB_WriteFloatInput(36, g_Apparent_Power[1]);
+    MB_WriteFloatInput(38, g_Apparent_Power[2]);
+
+    // Power Factor PF
+    MB_WriteFloatInput(40, g_Power_Factor[0]);
+    MB_WriteFloatInput(42, g_Power_Factor[1]);
+    MB_WriteFloatInput(44, g_Power_Factor[2]);
+
+    // Frequency
+    MB_WriteFloatInput(46, g_Signal_Frequency);
+
+    // Phase status bitmaps
+    uint16_t phase_active_bits = (g_Phase_Active[0] ? 0x0001 : 0) |
+                                 (g_Phase_Active[1] ? 0x0002 : 0) |
+                                 (g_Phase_Active[2] ? 0x0004 : 0);
+    uint16_t phase_leading_bits = (g_Phase_Leading[0] ? 0x0001 : 0) |
+                                  (g_Phase_Leading[1] ? 0x0002 : 0) |
+                                  (g_Phase_Leading[2] ? 0x0004 : 0);
+    if (48 < S_REG_INPUT_NREGS) usSRegInBuf[48] = phase_active_bits;
+    if (49 < S_REG_INPUT_NREGS) usSRegInBuf[49] = phase_leading_bits;
+
+    // ---------------- Modbus coil to control relay ----------------
+    // Coil 0 controls RELAY: 1=ON, 0=OFF
+    bool relay_on = (ucSCoilBuf[0] & 0x01) != 0;
+    if (relay_on) {
+        LL_GPIO_SetOutputPin(RELAY_PORT, RELAY_PIN);
+    } else {
+        LL_GPIO_ResetOutputPin(RELAY_PORT, RELAY_PIN);
     }
 }
 
-// static void Status_Led(void *pvParameters)
-// {
-//     // Suppress unused parameter warning
-//     (void)pvParameters;
-    
-//     // Check if coil 1 is set for manual LED control
-//     if (ucSCoilBuf[1] & 0x01) // Use coil 1 for LED blink control
-//     {
-//         LL_GPIO_TogglePin(GPIOA, LL_GPIO_PIN_4);
-//     }
-//     // If coil 0 is set, LED is controlled by Modbus (static on/off)
-//     else if (ucSCoilBuf[0] & 0x01) 
-//     {
-//         LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_4);  // Turn on LED
-//     }
-//     else
-//     {
-//         // Default: blink LED to show system is alive
-//         LL_GPIO_TogglePin(GPIOA, LL_GPIO_PIN_4);
-//     }
-// }
 
 
 static void App_UITask(void *pvParameters)
@@ -173,29 +187,35 @@ static void App_UITask(void *pvParameters)
     // Suppress unused parameter warning
     (void)pvParameters;
     
-    // Simulate changing power data
-    static uint16_t update_counter = 0;
+    static uint32_t update_counter = 0;
     static uint8_t page_counter = 0;
     
-    ui_power_data_t live_data;
+    // Create real data structure and populate with calculate_task data
+    ui_power_data_t real_data;
     
-    // Generate simulated power data with some variation
-    float base_voltage = 220.0f + (update_counter % 20) * 0.1f - 1.0f; // 219-221V
-    float base_current = 12.0f + (update_counter % 15) * 0.05f - 0.375f; // 11.625-12.375A
-    
+    // Copy RMS values (mapping channels to phases)
+    real_data.voltage_rms[0] = g_RMS_Value[3]; // L1 voltage
+    real_data.voltage_rms[1] = g_RMS_Value[4]; // L2 voltage
+    real_data.voltage_rms[2] = g_RMS_Value[5]; // L3 voltage
+
+    real_data.current_rms[0] = g_RMS_Value[2]; // L1 current
+    real_data.current_rms[1] = g_RMS_Value[1]; // L2 current
+    real_data.current_rms[2] = g_RMS_Value[0]; // L3 current
+
+    // Copy power values
     for (uint8_t phase = 0; phase < 3; phase++)
     {
-        live_data.voltage_rms[phase] = base_voltage + (phase * 0.5f) + ((update_counter + phase * 7) % 10) * 0.05f;
-        live_data.current_rms[phase] = base_current + (phase * 0.3f) + ((update_counter + phase * 5) % 8) * 0.02f;
-        live_data.power_active[phase] = live_data.voltage_rms[phase] * live_data.current_rms[phase] * 0.95f; // PF = 0.95
-        live_data.power_reactive[phase] = live_data.power_active[phase] * 0.33f; // tan(phi) = 0.33
+        real_data.power_active[phase] = g_Active_Power[phase];
+        real_data.power_reactive[phase] = g_Reactive_Power[phase];
+        real_data.power_apparent[phase] = g_Apparent_Power[phase];
+        real_data.power_factor[phase] = g_Power_Factor[phase];
     }
     
-    live_data.frequency = 50.0f + ((update_counter % 100) * 0.01f) - 0.5f; // 49.5-50.5 Hz
-    live_data.status = (update_counter % 50 < 45) ? 0x01 : 0x00; // Occasional error simulation
+    real_data.frequency = g_Signal_Frequency;
+    real_data.status = 0x01; // System OK
     
-    // Update UI data
-    UI_UpdateData(&live_data);
+    // Update UI with real data
+    UI_UpdateData(&real_data);
     
     // Process button events (read flags and handle UI logic)
     UI_ProcessButtonFlags();

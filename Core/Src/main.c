@@ -587,9 +587,6 @@ static void MX_GPIO_Init(void)
   LL_GPIO_ResetOutputPin(GPIOB, LL_GPIO_PIN_11);
 
   /**/
-  LL_GPIO_ResetOutputPin(GPIOB, LL_GPIO_PIN_12);
-
-  /**/
   LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_8);
 
   /**/
@@ -621,6 +618,9 @@ static void MX_GPIO_Init(void)
 
   /**/
   LL_GPIO_ResetOutputPin(GPIOB, LL_GPIO_PIN_9);
+
+  /**/
+  LL_GPIO_SetOutputPin(GPIOB, LL_GPIO_PIN_12);
 
   /**/
   GPIO_InitStruct.Pin = LL_GPIO_PIN_13;

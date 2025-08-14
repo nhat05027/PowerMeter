@@ -34,7 +34,7 @@ tSchedulerTask 	g_psSchedulerTable[SCHEDULER_TASK_COUNT] =
                     {
                         &ADC_Task,
                         (void *) 0,
-                        20,                          //call every 500us
+                        5,                          //call every 1000us
                         0,			                //count from start
                         true		                //is active
                     },
@@ -198,9 +198,9 @@ static void App_UITask(void *pvParameters)
     real_data.voltage_rms[1] = g_RMS_Value[4]; // L2 voltage
     real_data.voltage_rms[2] = g_RMS_Value[5]; // L3 voltage
 
-    real_data.current_rms[0] = g_RMS_Value[2]; // L1 current
+    real_data.current_rms[0] = g_RMS_Value[0]; // L1 current
     real_data.current_rms[1] = g_RMS_Value[1]; // L2 current
-    real_data.current_rms[2] = g_RMS_Value[0]; // L3 current
+    real_data.current_rms[2] = g_RMS_Value[2]; // L3 current
 
     // Copy power values
     for (uint8_t phase = 0; phase < 3; phase++)

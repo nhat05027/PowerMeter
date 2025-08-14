@@ -58,9 +58,11 @@ static void lcd_write_data(TG12864_Handle* lcd, uint8_t data, uint8_t chip) {
 
 // ==== PUBLIC API ====
 void TG12864_Init(TG12864_Handle* lcd) {
-    write_pin(lcd->rst, TG_PIN_RESET);
-    LL_mDelay(10);
-    write_pin(lcd->rst, TG_PIN_SET);
+    if (lcd->rst.port != NULL) {
+        write_pin(lcd->rst, TG_PIN_RESET);
+        LL_mDelay(10);
+        write_pin(lcd->rst, TG_PIN_SET);
+    }
 
     for (int chip = 1; chip <= 2; chip++) {
         lcd_write_instruction(lcd, 0x3F, chip);  // Display ON

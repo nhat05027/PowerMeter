@@ -25,13 +25,16 @@
 #define ADC_FEEDBACK_IRQ        ADC1_IRQn
 
 #define ADC_CHANNEL_COUNT       7
+
+#define ADC_NEUTRAL           LL_ADC_CHANNEL_0
+
+#define ADC_CURRENT_L1        LL_ADC_CHANNEL_1
+#define ADC_CURRENT_L2        LL_ADC_CHANNEL_2
+#define ADC_CURRENT_L3        LL_ADC_CHANNEL_3
+
 #define ADC_VOLTAGE_L1        LL_ADC_CHANNEL_4
 #define ADC_VOLTAGE_L2        LL_ADC_CHANNEL_5
 #define ADC_VOLTAGE_L3        LL_ADC_CHANNEL_6
-#define ADC_CURRENT_L1        LL_ADC_CHANNEL_3
-#define ADC_CURRENT_L2        LL_ADC_CHANNEL_2
-#define ADC_CURRENT_L3        LL_ADC_CHANNEL_1
-#define ADC_NEUTRAL           LL_ADC_CHANNEL_0
 
 /*********************LCD******************/
 #define LCD_BL_PORT          GPIOB
@@ -44,8 +47,8 @@
 #define LCD_DI_PIN           LL_GPIO_PIN_9
 #define LCD_EN_PORT          GPIOB
 #define LCD_EN_PIN           LL_GPIO_PIN_8
-#define LCD_NRST_PORT        GPIOB
-#define LCD_NRST_PIN         LL_GPIO_PIN_12
+#define LCD_NRST_PORT        NULL
+#define LCD_NRST_PIN         NULL
 
 #define LCD_D0_PORT          GPIOB
 #define LCD_D0_PIN           LL_GPIO_PIN_5

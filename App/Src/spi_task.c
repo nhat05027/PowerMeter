@@ -70,34 +70,30 @@ void spi_task_Init()
 
 
 
-void random_data_Task(void*)
+void random_data_Task(void *pvParameters)
 {
-    SPI_TX_data_t s_SPI_data_array[4];
+    // Tạo 1 frame lớn chứa tất cả data
+    SPI_TX_data_t s_SPI_data_array[52];  // 13 floats x 4 bytes = 52 bytes
     SPI_frame_t   s_SPI_frame;
 
     EnergyData_t data = random_energy_data();
     uint8_t* float_bytes = (uint8_t*)&data;
 
-    for (uint8_t field_idx = 0; field_idx < 13; field_idx++)
-    {
-        // Mỗi float chiếm 4 byte
-        uint8_t* p = &float_bytes[field_idx * sizeof(float)];
-
-        // Gắn từng byte vào mảng data
-        for (uint8_t i = 0; i < 4; i++) {
-            s_SPI_data_array[i].data = p[i];
-            s_SPI_data_array[i].mask = 0xFF;
-        }
-
-        s_SPI_frame.addr = field_idx;           // Địa chỉ 0x00 đến 0x0C
-        s_SPI_frame.data_size = 4;              // 4 byte float
-        s_SPI_frame.p_data_array = s_SPI_data_array;
-
-        // Gửi từng frame
-        SPI_Overwrite(&ESP_SPI, &s_SPI_frame);
+    // Copy tất cả 52 bytes vào data array
+    for (uint8_t i = 0; i < 52; i++) {
+        s_SPI_data_array[i].data = float_bytes[i];
+        s_SPI_data_array[i].mask = 0xFF;
     }
-    spi_task_cnt ++;
 
+    // Tạo 1 frame duy nhất với address 0x00 và size 52
+    s_SPI_frame.addr = 0x00;              // Start address
+    s_SPI_frame.data_size = 52;           // 13 floats x 4 bytes
+    s_SPI_frame.p_data_array = s_SPI_data_array;
+
+    // Gửi 1 frame chứa tất cả data
+    SPI_Overwrite(&ESP_SPI, &s_SPI_frame);
+    
+    spi_task_cnt++;
 }
 
 
@@ -133,10 +129,10 @@ void SPI_IRQHandler(void)
         // Còn lại (WRITE, WRITE_MODIFY) KHÔNG LÀM GÌ - vì không có nhận data
 
         // Nếu kết thúc 1 frame
-        // if (p_tx->data_type == SPI_ENDER)
-        // {
-        //     LL_GPIO_SetOutputPin(SPI_CS_PORT, SPI_CS_PIN);
-        // }
+        if (p_tx->data_type == SPI_ENDER)
+        {
+            LL_GPIO_SetOutputPin(SPI_CS_PORT, SPI_CS_PIN);
+        }
 
         // Advance TX index sang byte tiếp theo
         SPI_ADVANCE_TX_READ_INDEX(&ESP_SPI);

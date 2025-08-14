@@ -269,7 +269,7 @@ void SPI_Prime_Transmit(spi_stdio_typedef* p_spi)
 {
     SPI_TX_buffer_t *p_tx = &p_spi->p_TX_buffer[p_spi->TX_read_index];
 
-    if (p_tx->data_type == SPI_HEADER)
+    if (p_tx->data_type == SPI_SYNC_START)
     {
         if(p_tx->command == SPI_WRITE_MODIFY)
         {

@@ -27,7 +27,7 @@ static void App_UITask(void *pvParameters);
 static void App_ButtonTask(void *pvParameters);
 
 
-#define         SCHEDULER_TASK_COUNT  5
+#define         SCHEDULER_TASK_COUNT  6
 uint32_t        g_ui32SchedulerNumTasks = SCHEDULER_TASK_COUNT;
 tSchedulerTask 	g_psSchedulerTable[SCHEDULER_TASK_COUNT] =
                 {
@@ -66,6 +66,13 @@ tSchedulerTask 	g_psSchedulerTable[SCHEDULER_TASK_COUNT] =
                         0,                          //count from start
                         true                        //is active
                     },
+                    {
+                        &random_data_Task,
+                        (void *) 0,
+                        20000,                      //call every 1000ms
+                        0,                          //count from start
+                        true                        //is active
+                    },
                 };
 
 void App_Main(void)
@@ -88,6 +95,8 @@ void App_Main(void)
     
     // Initialize UI system
     UI_Init(&LCD);
+
+    spi_task_Init();
     
 
     while (1)

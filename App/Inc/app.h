@@ -19,6 +19,7 @@
 // INCLUDE TASK //
 #include "adc_task.h"
 #include "calculate_task.h"
+#include "spi_task.h"
 
 // INCLUDE LIB //
 #include "modbus_rs485.h"

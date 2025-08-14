@@ -400,6 +400,10 @@ static void MX_SPI2_Init(void)
   GPIO_InitStruct.Alternate = LL_GPIO_AF_0;
   LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+  /* SPI2 interrupt Init */
+  NVIC_SetPriority(SPI2_IRQn, 0);
+  NVIC_EnableIRQ(SPI2_IRQn);
+
   /* USER CODE BEGIN SPI2_Init 1 */
 
   /* USER CODE END SPI2_Init 1 */
@@ -823,7 +827,7 @@ static void MX_GPIO_Init(void)
   LL_EXTI_Init(&EXTI_InitStruct);
 
   /* EXTI interrupt init*/
-  NVIC_SetPriority(EXTI0_1_IRQn, 1);
+  NVIC_SetPriority(EXTI0_1_IRQn, 2);
   NVIC_EnableIRQ(EXTI0_1_IRQn);
   NVIC_SetPriority(EXTI4_15_IRQn, 2);
   NVIC_EnableIRQ(EXTI4_15_IRQn);

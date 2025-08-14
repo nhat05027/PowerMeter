@@ -62,6 +62,7 @@ target_sources(stm32cubemx INTERFACE
     ../../App/Src/modbus_rs485.c
     ../../App/Src/calculate_task.c
     ../../App/Src/adc_task.c
+    ../../App/Src/spi_task.c
     ../../App/Src/lcd_ui.c
     ../../App/Src/button_handler.c
     ../../Utils/Scheduler/scheduler.c

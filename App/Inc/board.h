@@ -13,8 +13,8 @@
 #define SPI_HANDLE          SPI2
 #define SPI_IRQ             SPI2_IRQn
 
-#define SPI_CS_PORT         NULL
-#define SPI_CS_PIN          NULL
+#define SPI_CS_PORT         GPIOB
+#define SPI_CS_PIN          LL_GPIO_PIN_12
 
 /*********************LED******************/
 #define LED_PORT            GPIOB

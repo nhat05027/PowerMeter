@@ -6,13 +6,21 @@
 #define ADC_CHANNEL_COUNT    7  // Bao gồm ADC0 (offset) và ADC1-6
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Prototype ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+static void Process_ADC_Samples(void);  // Xử lý tính toán sau khi đọc xong 3 values
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 static uint8_t  ADC_current_phase = 1;       // Current phase (1-3)
-static uint16_t ADC0_Offset = 2048;          // Current offset value
 static uint8_t  reading_step = 0;            // 0=offset, 1=voltage, 2=current
 
+// Raw ADC buffer cho 1 triplet (offset + voltage + current)
+static uint16_t raw_offset = 0;
+static uint16_t raw_voltage = 0;
+static uint16_t raw_current = 0;
+static uint8_t  current_voltage_channel = 0;
+static uint8_t  current_current_channel = 0;
+
 static bool is_ADC_read_completed = false;
+static bool triplet_ready = false;           // Flag khi đã đọc xong 3 giá trị
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 int32_t RMS_Sum_Square[6] = {0};
@@ -56,6 +64,32 @@ static uint8_t Get_Current_Channel(uint8_t phase)
     return phase; // phase 1→1, phase 2→2, phase 3→3
 }
 
+// Xử lý tính toán NGOÀI interrupt để tối ưu timing
+static void Process_ADC_Samples(void)
+{
+    if (triplet_ready && g_Sample_Count < MAX_SAMPLE_COUNT)
+    {
+        // Tính differential cho voltage
+        uint8_t voltage_index = current_voltage_channel - 1; // Convert to 0-5 index
+        int16_t voltage_sample = (int16_t)raw_voltage - (int16_t)raw_offset;
+        g_ADC_Samples[voltage_index][g_Sample_Count] = voltage_sample;
+        RMS_Sum_Square[voltage_index] += (int32_t)voltage_sample * voltage_sample;
+
+        // Tính differential cho current
+        uint8_t current_index = current_current_channel - 1; // Convert to 0-5 index
+        int16_t current_sample = (int16_t)raw_current - (int16_t)raw_offset;
+        g_ADC_Samples[current_index][g_Sample_Count] = current_sample;
+        RMS_Sum_Square[current_index] += (int32_t)current_sample * current_sample;
+
+        // Lưu vào g_Readvalue để compatibility
+        g_Readvalue[0] = raw_offset;
+        g_Readvalue[current_voltage_channel] = raw_voltage;
+        g_Readvalue[current_current_channel] = raw_current;
+
+        triplet_ready = false; // Reset flag
+    }
+}
+
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* :::::::::: ADC Task Init :::::::: */
 void ADC_Task_Init(uint32_t Sampling_Time)
@@ -73,15 +107,18 @@ void ADC_Task_Init(uint32_t Sampling_Time)
     // Initialize state
     reading_step = 0;        // Start with offset
     ADC_current_phase = 1;   // Start with phase 1
+    triplet_ready = false;
 }
 
 /* :::::::::: ADC Task ::::::::::::: */
 void ADC_Task(void*)
 {
+    // Xử lý tính toán ở đây (ngoài interrupt)
+    Process_ADC_Samples();
+    
     if (is_ADC_read_completed == true)
     {
         is_ADC_read_completed = false;
-
         LL_ADC_REG_StartConversion(ADC_FEEDBACK_HANDLE);
     }
 }
@@ -96,16 +133,19 @@ void ADC_Task_IRQHandler(void)
 
         uint16_t adc_value = LL_ADC_REG_ReadConversionData12(ADC_FEEDBACK_HANDLE);
 
+        // CHỈ ĐỌC RAW VALUES - KHÔNG TÍNH TOÁN
         switch (reading_step)
         {
             case 0: // Đọc offset
             {
-                ADC0_Offset = adc_value;
-                g_Readvalue[0] = adc_value;
+                raw_offset = adc_value;
                 
-                // Chuyển ngay sang đọc voltage của phase hiện tại
-                uint8_t voltage_channel = Get_Voltage_Channel(ADC_current_phase);
-                ADC_Switch_Channel(voltage_channel);
+                // Chuẩn bị channel info cho processing
+                current_voltage_channel = Get_Voltage_Channel(ADC_current_phase);
+                current_current_channel = Get_Current_Channel(ADC_current_phase);
+                
+                // Chuyển ngay sang đọc voltage
+                ADC_Switch_Channel(current_voltage_channel);
                 reading_step = 1;
                 
                 // Tự động start conversion tiếp
@@ -116,22 +156,10 @@ void ADC_Task_IRQHandler(void)
             
             case 1: // Đọc voltage
             {
-                uint8_t voltage_channel = Get_Voltage_Channel(ADC_current_phase);
-                g_Readvalue[voltage_channel] = adc_value;
+                raw_voltage = adc_value;
                 
-                if (g_Sample_Count < MAX_SAMPLE_COUNT)
-                {
-                    uint8_t channel_index = voltage_channel - 1; // Convert to 0-5 index
-                    
-                    // Tính differential: voltage - offset (vừa đọc)
-                    int16_t sample = (int16_t)adc_value - (int16_t)ADC0_Offset;
-                    g_ADC_Samples[channel_index][g_Sample_Count] = sample;
-                    RMS_Sum_Square[channel_index] += (int32_t)sample * sample;
-                }
-                
-                // Chuyển ngay sang đọc current của cùng phase
-                uint8_t current_channel = Get_Current_Channel(ADC_current_phase);
-                ADC_Switch_Channel(current_channel);
+                // Chuyển ngay sang đọc current
+                ADC_Switch_Channel(current_current_channel);
                 reading_step = 2;
                 
                 // Tự động start conversion tiếp
@@ -142,29 +170,20 @@ void ADC_Task_IRQHandler(void)
             
             case 2: // Đọc current
             {
-                uint8_t current_channel = Get_Current_Channel(ADC_current_phase);
-                g_Readvalue[current_channel] = adc_value;
+                raw_current = adc_value;
                 
-                if (g_Sample_Count < MAX_SAMPLE_COUNT)
-                {
-                    uint8_t channel_index = current_channel - 1; // Convert to 0-5 index
-                    
-                    // Tính differential: current - offset (cùng offset với voltage)
-                    int16_t sample = (int16_t)adc_value - (int16_t)ADC0_Offset;
-                    g_ADC_Samples[channel_index][g_Sample_Count] = sample;
-                    RMS_Sum_Square[channel_index] += (int32_t)sample * sample;
-                }
+                // Hoàn thành triplet - đánh dấu sẵn sàng để process
+                triplet_ready = true;
                 
-                // Hoàn thành một phase (offset + voltage + current)
                 // Chuyển sang phase tiếp theo
                 ADC_current_phase++;
                 if (ADC_current_phase > 3)
                 {
                     ADC_current_phase = 1;    // Reset về phase 1
-                    g_Sample_Count++;         // Hoàn thành 1 cycle đầy đủ của tất cả 3 phases
+                    g_Sample_Count++;         // Hoàn thành 1 cycle đầy đủ
                 }
                 
-                // Chuẩn bị cho phase tiếp theo - bắt đầu với offset
+                // Chuẩn bị cho phase tiếp theo
                 ADC_Switch_Channel(0);
                 reading_step = 0;
                 break;
@@ -186,6 +205,7 @@ void ADC_Reset_Samples(void)
     g_Sample_Count = 0;
     ADC_current_phase = 1;
     reading_step = 0;
+    triplet_ready = false;
     
     // Switch về offset channel và re-enable interrupt
     ADC_Switch_Channel(0);

@@ -67,7 +67,7 @@ tSchedulerTask 	g_psSchedulerTable[SCHEDULER_TASK_COUNT] =
                         true                        //is active
                     },
                     {
-                        &random_data_Task,
+                        &real_data_Task,
                         (void *) 0,
                         20000,                      //call every 1000ms
                         0,                          //count from start

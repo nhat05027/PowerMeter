@@ -15,45 +15,38 @@ uint8_t g_temp_SPI_RX_buffer[6];
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Enum ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Struct ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 typedef struct {
-    float voltage_a;
-    float current_a;
-    float active_power_a;
-    float apparent_power_a;
-
-    float voltage_b;
-    float current_b;
-    float active_power_b;
-    float apparent_power_b;
-
-    float voltage_c;
-    float current_c;
-    float active_power_c;
-    float apparent_power_c;
-
-    float frequency;
-} EnergyData_t;
+    float rms_voltage[3];     // V1, V2, V3 (voltage RMS)
+    float rms_current[3];     // I1, I2, I3 (current RMS)
+    float active_power[3];    // P1, P2, P3 (active power)
+    float apparent_power[3];  // Q1, Q2, Q3 (reactive power)
+    float frequency;          // Frequency
+} EnergyData_t;  // Total: 13 floats = 52 bytes
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Class ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Private Types ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-static EnergyData_t random_energy_data() {
+static EnergyData_t get_real_energy_data() {
     EnergyData_t data;
-    data.voltage_a = 220.0f;
-    data.current_a = 5.0f;
-    data.active_power_a = 1000.0f;
-    data.apparent_power_a = 1100.0f;
-
-    data.voltage_b = 221.0f;
-    data.current_b = 5.1f;
-    data.active_power_b = 1005.0f;
-    data.apparent_power_b = 1110.0f;
-
-    data.voltage_c = 222.0f;
-    data.current_c = 5.2f;
-    data.active_power_c = 1010.0f;
-    data.apparent_power_c = 1120.0f;
-
-    data.frequency = 50.0f;
+    
+    // Copy voltage RMS values (channels 3, 4, 5)
+    data.rms_voltage[0] = g_RMS_Value[3];  // L1 voltage
+    data.rms_voltage[1] = g_RMS_Value[4];  // L2 voltage
+    data.rms_voltage[2] = g_RMS_Value[5];  // L3 voltage
+    
+    // Copy current RMS values (channels 0, 1, 2)  
+    data.rms_current[0] = g_RMS_Value[0];  // L1 current
+    data.rms_current[1] = g_RMS_Value[1];  // L2 current
+    data.rms_current[2] = g_RMS_Value[2];  // L3 current
+    
+    // Copy power values (3 phases)
+    for(int i = 0; i < 3; i++) {
+        data.active_power[i] = g_Active_Power[i];
+        data.apparent_power[i] = g_Apparent_Power[i];
+    }
+    
+    // Copy frequency
+    data.frequency = g_Signal_Frequency;
+    
     return data;
 }
 
@@ -70,13 +63,13 @@ void spi_task_Init()
 
 
 
-void random_data_Task(void *pvParameters)
+void real_data_Task(void *pvParameters)
 {
-    // Tạo 1 frame lớn chứa tất cả data
+    // Tạo 1 frame chứa 52 bytes (13 floats)
     SPI_TX_data_t s_SPI_data_array[52];  // 13 floats x 4 bytes = 52 bytes
     SPI_frame_t   s_SPI_frame;
 
-    EnergyData_t data = random_energy_data();
+    EnergyData_t data = get_real_energy_data();
     uint8_t* float_bytes = (uint8_t*)&data;
 
     // Copy tất cả 52 bytes vào data array
@@ -90,7 +83,7 @@ void random_data_Task(void *pvParameters)
     s_SPI_frame.data_size = 52;           // 13 floats x 4 bytes
     s_SPI_frame.p_data_array = s_SPI_data_array;
 
-    // Gửi 1 frame chứa tất cả data
+    // Gửi 1 frame chứa 52 bytes data thật
     SPI_Overwrite(&ESP_SPI, &s_SPI_frame);
     
     spi_task_cnt++;

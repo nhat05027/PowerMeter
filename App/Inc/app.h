@@ -28,6 +28,14 @@
 // INCLUDE BOARD //
 #include "board.h"
 
+// Global variables from calculate_task.c for measurements
+extern float g_RMS_Value[6];         // RMS values for 6 channels
+extern float g_Active_Power[3];      // Active power for 3 phases  
+extern float g_Reactive_Power[3];    // Reactive power for 3 phases
+extern float g_Apparent_Power[3];    // Apparent power for 3 phases
+extern float g_Power_Factor[3];      // Power factor for 3 phases
+extern float g_Signal_Frequency;     // Signal frequency
+
 
 void App_Main(void);
 

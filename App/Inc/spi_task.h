@@ -18,7 +18,7 @@ extern uint16_t spi_task_cnt;
 void spi_task_Init();
 
 /* :::::::::: CMD Line Task ::::::::::::: */
-void random_data_Task(void *pvParameters);
+void real_data_Task(void *pvParameters);
 
 /* :::::::::: IRQ Handler ::::::::::::: */
 void SPI_IRQHandler(void);

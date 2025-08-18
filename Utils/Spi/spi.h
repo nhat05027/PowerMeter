@@ -22,8 +22,7 @@ typedef enum
 
 typedef enum
 {
-    SPI_SYNC_START = 0,
-    SPI_HEADER,
+    SPI_HEADER = 0,
     SPI_DATA,
     SPI_ENDER,
 } SPI_data_t;

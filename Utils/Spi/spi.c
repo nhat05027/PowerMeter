@@ -269,7 +269,7 @@ void SPI_Prime_Transmit(spi_stdio_typedef* p_spi)
 {
     SPI_TX_buffer_t *p_tx = &p_spi->p_TX_buffer[p_spi->TX_read_index];
 
-    if (p_tx->data_type == SPI_SYNC_START)
+    if (p_tx->data_type == SPI_HEADER)
     {
         if(p_tx->command == SPI_WRITE_MODIFY)
         {
@@ -349,18 +349,6 @@ __STATIC_INLINE void SPI_Add_to_TX_buffer(
                                         SPI_frame_t*        p_frame,
                                         SPI_command_t       command)
 {
-    if (!SPI_TX_BUFFER_FULL(p_spi)) {
-        p_spi->p_TX_buffer[p_spi->TX_write_index].data_type = SPI_SYNC_START;
-        p_spi->p_TX_buffer[p_spi->TX_write_index].data = 0xAA;
-        p_spi->p_TX_buffer[p_spi->TX_write_index].mask = 0xFF;
-        SPI_ADVANCE_TX_WRITE_INDEX(p_spi);
-    }
-    if (!SPI_TX_BUFFER_FULL(p_spi)) {
-        p_spi->p_TX_buffer[p_spi->TX_write_index].data_type = SPI_SYNC_START;
-        p_spi->p_TX_buffer[p_spi->TX_write_index].data = 0x55;
-        p_spi->p_TX_buffer[p_spi->TX_write_index].mask = 0xFF;
-        SPI_ADVANCE_TX_WRITE_INDEX(p_spi);
-    }
 
     if (command == SPI_WRITE_MODIFY)
     {

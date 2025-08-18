@@ -1,10 +1,14 @@
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Include ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 #include "calculate_task.h"
+#include <math.h>
+#include <stddef.h>
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Defines ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 #define NUM_CHANNELS 6
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Prototype ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 static float custom_sqrt(float number);
+static void simple_dft(float* input, uint16_t N, uint8_t harmonic, float* magnitude);
+static float calculate_phase_thd(uint8_t phase);
 // static uint32_t last_interrupt_time = 0;
 static float signal_frequency = 0; // Signal frequency (Hz)
 
@@ -20,43 +24,17 @@ float g_Power_Factor[3] = {0}; // Power Factor for 3 phases
 uint8_t g_Phase_Active[3] = {0, 0, 0}; // Phase activity status (0=no voltage, 1=active)
 uint8_t g_Phase_Leading[3] = {0, 0, 0}; // Phase relationship (0=lagging, 1=leading)
 
+// THD analysis variables
+float g_THD_Voltage[3] = {0.0f, 0.0f, 0.0f};     // THD for 3 phase voltages (%)
+float g_Fundamental_Voltage[3] = {0.0f, 0.0f, 0.0f}; // Fundamental voltage component (V)
+float g_Harmonic_Voltage[3][THD_HARMONICS_COUNT] = {0}; // Individual harmonics (V)
+
 // Private variables for phase detection
 static uint32_t phase_timeout_counter[3] = {0, 0, 0}; // Timeout counters for phase detection
 
 /* :::::::::: RMS Task Init :::::::: */
 void Calculate_Task_Init(void)
 {
-    // Cấu hình GPIO ngắt
-    // LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
-    
-    // Kích hoạt clock cho GPIO
-    // LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
-    
-    // Cấu hình pin GPIO
-    // GPIO_InitStruct.Pin = GPIO_TRIGGER_PIN;
-    // GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
-    // GPIO_InitStruct.Pull = LL_GPIO_PULL_DOWN; // Pull-down cho cạnh lên
-    // LL_GPIO_Init(GPIO_TRIGGER_PORT, &GPIO_InitStruct);
-    
-    // // Cấu hình ngắt EXTI
-    // LL_EXTI_InitTypeDef EXTI_InitStruct = {0};
-    // EXTI_InitStruct.Line_0_31 = LL_EXTI_LINE_1; // Thay X bằng số line tương ứng với pin
-    // EXTI_InitStruct.LineCommand = ENABLE;
-    // EXTI_InitStruct.Mode = LL_EXTI_MODE_IT;
-    // EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_RISING; // Kích hoạt ngắt ở cạnh lên
-    // LL_EXTI_Init(&EXTI_InitStruct);
-    
-    // // Kích hoạt ngắt trong NVIC
-    // NVIC_SetPriority(EXTI0_1_IRQn, 0); // Thay X bằng số ngắt tương ứng
-    // NVIC_EnableIRQ(EXTI0_1_IRQn);
-
-    // Timer
-    // Cấu hình timer 16-bit chạy ở 320kHz
-    // LL_TIM_InitTypeDef TIM_InitStruct = {0};
-    // LL_TIM_StructInit(&TIM_InitStruct);
-    // TIM_InitStruct.Prescaler = (SystemCoreClock / TIMER_FREQ_HZ) - 1; // Prescaler = 100
-    // TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
-    // LL_TIM_Init(TIMER_HANDLE , &TIM_InitStruct); // Thay TIMx bằng timer cụ thể (ví dụ: TIM2)
     LL_TIM_EnableCounter(TIMER_HANDLE);
 }
 
@@ -330,6 +308,119 @@ void Check_Phase_Timeouts(void *pvParameters)
     }
 }
 
+/* :::::::::: THD Analysis Functions ::::::::::::: */
+void Calculate_THD_Task(void *pvParameters)
+{
+    // Chỉ tính THD khi có đủ sample và tần số ổn định
+    if (g_Sample_Count < THD_SAMPLES_PER_CYCLE || g_Signal_Frequency < 45.0f || g_Signal_Frequency > 65.0f)
+    {
+        return;
+    }
+
+    // Phân tích THD cho từng pha điện áp
+    for (uint8_t phase = 0; phase < 3; phase++)
+    {
+        if (g_Phase_Active[phase])
+        {
+            THD_Analyze_Voltage_Phase(phase);
+        }
+        else
+        {
+            // Reset THD data cho pha không hoạt động
+            g_THD_Voltage[phase] = 0.0f;
+            g_Fundamental_Voltage[phase] = 0.0f;
+            for (uint8_t h = 0; h < THD_HARMONICS_COUNT; h++)
+            {
+                g_Harmonic_Voltage[phase][h] = 0.0f;
+            }
+        }
+    }
+}
+
+void THD_Analyze_Voltage_Phase(uint8_t phase)
+{
+    if (phase >= 3) return;
+
+    // Xác định channel điện áp tương ứng với phase
+    uint8_t voltage_channel;
+    switch(phase)
+    {
+        case 0: voltage_channel = 3; break; // L1 -> Channel 3
+        case 1: voltage_channel = 4; break; // L2 -> Channel 4  
+        case 2: voltage_channel = 5; break; // L3 -> Channel 5
+        default: return;
+    }
+
+    // Lấy samples cho phân tích (sử dụng samples gần đây nhất)
+    uint16_t samples_to_analyze = (g_Sample_Count < THD_SAMPLES_PER_CYCLE) ? g_Sample_Count : THD_SAMPLES_PER_CYCLE;
+    uint16_t start_index = (g_Sample_Count > THD_SAMPLES_PER_CYCLE) ? (g_Sample_Count - THD_SAMPLES_PER_CYCLE) : 0;
+
+    // Tính fundamental frequency component (harmonic 1)
+    float fundamental_magnitude = 0.0f;
+    simple_dft(&g_ADC_Samples[voltage_channel][start_index], samples_to_analyze, 1, &fundamental_magnitude);
+    
+    // Chuyển đổi từ ADC value sang voltage
+    g_Fundamental_Voltage[phase] = (fundamental_magnitude + Voltage_Beta_Coeff) * Voltage_Alpha_Coeff * Voltage_Transform_Ratio;
+
+    // Kiểm tra fundamental có đủ lớn để tính THD không
+    if (g_Fundamental_Voltage[phase] < THD_MIN_FUNDAMENTAL)
+    {
+        g_THD_Voltage[phase] = 0.0f;
+        return;
+    }
+
+    // Tính các harmonics từ 2 đến THD_HARMONICS_COUNT
+    float harmonic_sum_squared = 0.0f;
+    for (uint8_t h = 2; h <= THD_HARMONICS_COUNT; h++)
+    {
+        float harmonic_magnitude = 0.0f;
+        simple_dft(&g_ADC_Samples[voltage_channel][start_index], samples_to_analyze, h, &harmonic_magnitude);
+        
+        // Chuyển đổi sang voltage và lưu trữ
+        g_Harmonic_Voltage[phase][h-1] = (harmonic_magnitude + Voltage_Beta_Coeff) * Voltage_Alpha_Coeff * Voltage_Transform_Ratio;
+        
+        // Cộng dồn bình phương để tính THD
+        harmonic_sum_squared += g_Harmonic_Voltage[phase][h-1] * g_Harmonic_Voltage[phase][h-1];
+    }
+
+    // Tính THD = sqrt(sum of harmonics²) / fundamental * 100%
+    if (g_Fundamental_Voltage[phase] > 0.0f)
+    {
+        g_THD_Voltage[phase] = (custom_sqrt(harmonic_sum_squared) / g_Fundamental_Voltage[phase]) * 100.0f;
+        
+        // Giới hạn THD trong khoảng hợp lý
+        if (g_THD_Voltage[phase] > 100.0f)
+            g_THD_Voltage[phase] = 100.0f;
+    }
+}
+
+void THD_Reset_Data(void)
+{
+    for (uint8_t phase = 0; phase < 3; phase++)
+    {
+        g_THD_Voltage[phase] = 0.0f;
+        g_Fundamental_Voltage[phase] = 0.0f;
+        for (uint8_t h = 0; h < THD_HARMONICS_COUNT; h++)
+        {
+            g_Harmonic_Voltage[phase][h] = 0.0f;
+        }
+    }
+}
+
+float THD_Get_Voltage_THD(uint8_t phase)
+{
+    if (phase < 3)
+        return g_THD_Voltage[phase];
+    return 0.0f;
+}
+
+float THD_Get_Harmonic_Voltage(uint8_t phase, uint8_t harmonic)
+{
+    if (phase < 3 && harmonic > 0 && harmonic <= THD_HARMONICS_COUNT)
+        return g_Harmonic_Voltage[phase][harmonic-1];
+    return 0.0f;
+}
+
 
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -352,6 +443,54 @@ static float custom_sqrt(float number)
     // y = y * (threehalfs - (x2 * y * y)); // Lặp Newton lần 2 (bỏ để nhanh hơn)
 
     return number * y; // sqrt(x) = x * (1/sqrt(x))
+}
+
+/* :::::::::: Simple DFT for Harmonic Analysis ::::::::::::: */
+static void simple_dft(float* input, uint16_t N, uint8_t harmonic, float* magnitude)
+{
+    if (input == NULL || magnitude == NULL || N == 0 || harmonic == 0)
+    {
+        *magnitude = 0.0f;
+        return;
+    }
+
+    float real_sum = 0.0f;
+    float imag_sum = 0.0f;
+    
+    // Tính DFT cho harmonic cụ thể
+    // X[k] = sum(x[n] * e^(-j*2*pi*k*n/N)) cho k = harmonic
+    for (uint16_t n = 0; n < N; n++)
+    {
+        // Sử dụng công thức Euler: e^(-j*theta) = cos(theta) - j*sin(theta)
+        float angle = -2.0f * 3.14159265359f * (float)harmonic * (float)n / (float)N;
+        float cos_val = cosf(angle);
+        float sin_val = sinf(angle);
+        
+        real_sum += input[n] * cos_val;
+        imag_sum += input[n] * sin_val;
+    }
+    
+    // Magnitude = sqrt(real² + imag²)
+    *magnitude = custom_sqrt(real_sum * real_sum + imag_sum * imag_sum) * 2.0f / (float)N;
+}
+
+/* :::::::::: Calculate THD for specific phase ::::::::::::: */
+static float calculate_phase_thd(uint8_t phase)
+{
+    if (phase >= 3 || !g_Phase_Active[phase])
+        return 0.0f;
+        
+    float fundamental = g_Fundamental_Voltage[phase];
+    if (fundamental < THD_MIN_FUNDAMENTAL)
+        return 0.0f;
+    
+    float harmonic_sum_squared = 0.0f;
+    for (uint8_t h = 1; h < THD_HARMONICS_COUNT; h++) // Start from index 1 (2nd harmonic)
+    {
+        harmonic_sum_squared += g_Harmonic_Voltage[phase][h] * g_Harmonic_Voltage[phase][h];
+    }
+    
+    return (custom_sqrt(harmonic_sum_squared) / fundamental) * 100.0f;
 }
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ End of the program ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */

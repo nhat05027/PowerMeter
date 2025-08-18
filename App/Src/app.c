@@ -2,6 +2,7 @@
 #include "app.h"
 #include "stm32f0xx_ll_gpio.h"
 #include "stm32f0xx_ll_usart.h"
+#include "calculate_task.h"
 
 TG12864_Handle LCD = {
     .cs1 = {LCD_CS1_PORT, LCD_CS1_PIN},
@@ -27,7 +28,7 @@ static void App_UITask(void *pvParameters);
 static void App_ButtonTask(void *pvParameters);
 
 
-#define         SCHEDULER_TASK_COUNT  6
+#define         SCHEDULER_TASK_COUNT  7
 uint32_t        g_ui32SchedulerNumTasks = SCHEDULER_TASK_COUNT;
 tSchedulerTask 	g_psSchedulerTable[SCHEDULER_TASK_COUNT] =
                 {
@@ -70,6 +71,13 @@ tSchedulerTask 	g_psSchedulerTable[SCHEDULER_TASK_COUNT] =
                         &real_data_Task,
                         (void *) 0,
                         20000,                      //call every 1000ms
+                        0,                          //count from start
+                        true                        //is active
+                    },
+                    {
+                        &Calculate_THD_Task,
+                        (void *) 0,
+                        50000,                      //call every 5000ms (0.2Hz) - THD analysis
                         0,                          //count from start
                         true                        //is active
                     },

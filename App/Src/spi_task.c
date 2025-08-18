@@ -1,6 +1,7 @@
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Include~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 #include "app.h"
 #include "spi_task.h"
+#include "calculate_task.h"
 #include <stdio.h>
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Defines ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 #define SPI_BUFFER_SIZE 64
@@ -21,6 +22,14 @@ typedef struct {
     float apparent_power[3];  // Q1, Q2, Q3 (reactive power)
     float frequency;          // Frequency
 } EnergyData_t;  // Total: 13 floats = 52 bytes
+
+// Extended data structure with THD (for future use)
+typedef struct {
+    EnergyData_t basic_data;  // 13 floats = 52 bytes
+    float thd_voltage[3];     // THD for 3 phase voltages (%)
+    float fundamental_voltage[3]; // Fundamental voltage component (V)
+    // Note: This structure is larger than current SPI frame format
+} ExtendedEnergyData_t;
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Class ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Private Types ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -48,6 +57,22 @@ static EnergyData_t get_real_energy_data() {
     data.frequency = g_Signal_Frequency;
     
     return data;
+}
+
+// Function to get extended energy data including THD (for future use)
+static ExtendedEnergyData_t get_extended_energy_data() {
+    ExtendedEnergyData_t extended_data;
+    
+    // Get basic energy data
+    extended_data.basic_data = get_real_energy_data();
+    
+    // Get THD data
+    for(int i = 0; i < 3; i++) {
+        extended_data.thd_voltage[i] = THD_Get_Voltage_THD(i);
+        extended_data.fundamental_voltage[i] = g_Fundamental_Voltage[i];
+    }
+    
+    return extended_data;
 }
 
 

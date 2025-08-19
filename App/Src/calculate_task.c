@@ -26,37 +26,6 @@ static uint32_t phase_timeout_counter[3] = {0, 0, 0}; // Timeout counters for ph
 /* :::::::::: RMS Task Init :::::::: */
 void Calculate_Task_Init(void)
 {
-    // Cấu hình GPIO ngắt
-    // LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
-    
-    // Kích hoạt clock cho GPIO
-    // LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
-    
-    // Cấu hình pin GPIO
-    // GPIO_InitStruct.Pin = GPIO_TRIGGER_PIN;
-    // GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
-    // GPIO_InitStruct.Pull = LL_GPIO_PULL_DOWN; // Pull-down cho cạnh lên
-    // LL_GPIO_Init(GPIO_TRIGGER_PORT, &GPIO_InitStruct);
-    
-    // // Cấu hình ngắt EXTI
-    // LL_EXTI_InitTypeDef EXTI_InitStruct = {0};
-    // EXTI_InitStruct.Line_0_31 = LL_EXTI_LINE_1; // Thay X bằng số line tương ứng với pin
-    // EXTI_InitStruct.LineCommand = ENABLE;
-    // EXTI_InitStruct.Mode = LL_EXTI_MODE_IT;
-    // EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_RISING; // Kích hoạt ngắt ở cạnh lên
-    // LL_EXTI_Init(&EXTI_InitStruct);
-    
-    // // Kích hoạt ngắt trong NVIC
-    // NVIC_SetPriority(EXTI0_1_IRQn, 0); // Thay X bằng số ngắt tương ứng
-    // NVIC_EnableIRQ(EXTI0_1_IRQn);
-
-    // Timer
-    // Cấu hình timer 16-bit chạy ở 320kHz
-    // LL_TIM_InitTypeDef TIM_InitStruct = {0};
-    // LL_TIM_StructInit(&TIM_InitStruct);
-    // TIM_InitStruct.Prescaler = (SystemCoreClock / TIMER_FREQ_HZ) - 1; // Prescaler = 100
-    // TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
-    // LL_TIM_Init(TIMER_HANDLE , &TIM_InitStruct); // Thay TIMx bằng timer cụ thể (ví dụ: TIM2)
     LL_TIM_EnableCounter(TIMER_HANDLE);
 }
 
@@ -86,48 +55,48 @@ void Calculate_All_Power_Parameters(void)
     // Tính RMS values và Active Power trong cùng một vòng lặp
     float inv_sample_count = 1.0f / g_Sample_Count; // Tính một lần để tái sử dụng
     
-    g_RMS_Value[3] = (custom_sqrt((float)RMS_Sum_Square[3] * inv_sample_count) + Voltage_Beta_Coeff) * Voltage_Alpha_Coeff * Voltage_Transform_Ratio;
-    g_RMS_Value[0] = (custom_sqrt((float)RMS_Sum_Square[0] * inv_sample_count) + Current_Beta_Coeff) * Current_Alpha_Coeff * Current_Transform_Ratio;
-    g_RMS_Value[4] = (custom_sqrt((float)RMS_Sum_Square[4] * inv_sample_count) + Voltage_Beta_Coeff) * Voltage_Alpha_Coeff * Voltage_Transform_Ratio;
-    g_RMS_Value[1] = (custom_sqrt((float)RMS_Sum_Square[1] * inv_sample_count) + Current_Beta_Coeff) * Current_Alpha_Coeff * Current_Transform_Ratio;
-    g_RMS_Value[5] = (custom_sqrt((float)RMS_Sum_Square[5] * inv_sample_count) + Voltage_Beta_Coeff) * Voltage_Alpha_Coeff * Voltage_Transform_Ratio;
-    g_RMS_Value[2] = (custom_sqrt((float)RMS_Sum_Square[2] * inv_sample_count) + Current_Beta_Coeff) * Current_Alpha_Coeff * Current_Transform_Ratio;
+    // g_RMS_Value[3] = (custom_sqrt((float)RMS_Sum_Square[3] * inv_sample_count) + Voltage_Beta_Coeff) * Voltage_Alpha_Coeff * Voltage_Transform_Ratio;
+    // g_RMS_Value[0] = (custom_sqrt((float)RMS_Sum_Square[0] * inv_sample_count) + Current_Beta_Coeff) * Current_Alpha_Coeff * Current_Transform_Ratio;
+    // g_RMS_Value[4] = (custom_sqrt((float)RMS_Sum_Square[4] * inv_sample_count) + Voltage_Beta_Coeff) * Voltage_Alpha_Coeff * Voltage_Transform_Ratio;
+    // g_RMS_Value[1] = (custom_sqrt((float)RMS_Sum_Square[1] * inv_sample_count) + Current_Beta_Coeff) * Current_Alpha_Coeff * Current_Transform_Ratio;
+    // g_RMS_Value[5] = (custom_sqrt((float)RMS_Sum_Square[5] * inv_sample_count) + Voltage_Beta_Coeff) * Voltage_Alpha_Coeff * Voltage_Transform_Ratio;
+    // g_RMS_Value[2] = (custom_sqrt((float)RMS_Sum_Square[2] * inv_sample_count) + Current_Beta_Coeff) * Current_Alpha_Coeff * Current_Transform_Ratio;
     // Bước 1: Tính RMS values - chỉ tính cho phase active
     // L1 Phase (Voltage[3], Current[0])
-    // if (g_Phase_Active[0])
-    // {
-    //     g_RMS_Value[3] = (custom_sqrt((float)RMS_Sum_Square[3] * inv_sample_count) + Voltage_Beta_Coeff) * Voltage_Alpha_Coeff * Voltage_Transform_Ratio;
-    //     g_RMS_Value[0] = (custom_sqrt((float)RMS_Sum_Square[0] * inv_sample_count) + Current_Beta_Coeff) * Current_Alpha_Coeff * Current_Transform_Ratio;
-    // }
-    // else
-    // {
-    //     g_RMS_Value[3] = 0.0f;
-    //     g_RMS_Value[0] = 0.0f;
-    // }
+    if (g_Phase_Active[0])
+    {
+        g_RMS_Value[3] = (custom_sqrt((float)RMS_Sum_Square[3] * inv_sample_count) + Voltage_Beta_Coeff) * Voltage_Alpha_Coeff * Voltage_Transform_Ratio;
+        g_RMS_Value[0] = (custom_sqrt((float)RMS_Sum_Square[0] * inv_sample_count) + Current_Beta_Coeff) * Current_Alpha_Coeff * Current_Transform_Ratio;
+    }
+    else
+    {
+        g_RMS_Value[3] = 0.0f;
+        g_RMS_Value[0] = 0.0f;
+    }
     
-    // // L2 Phase (Voltage[4], Current[1])
-    // if (g_Phase_Active[1])
-    // {
-    //     g_RMS_Value[4] = (custom_sqrt((float)RMS_Sum_Square[4] * inv_sample_count) + Voltage_Beta_Coeff) * Voltage_Alpha_Coeff * Voltage_Transform_Ratio;
-    //     g_RMS_Value[1] = (custom_sqrt((float)RMS_Sum_Square[1] * inv_sample_count) + Current_Beta_Coeff) * Current_Alpha_Coeff * Current_Transform_Ratio;
-    // }
-    // else
-    // {
-    //     g_RMS_Value[4] = 0.0f;
-    //     g_RMS_Value[1] = 0.0f;
-    // }
+    // L2 Phase (Voltage[4], Current[1])
+    if (g_Phase_Active[1])
+    {
+        g_RMS_Value[4] = (custom_sqrt((float)RMS_Sum_Square[4] * inv_sample_count) + Voltage_Beta_Coeff) * Voltage_Alpha_Coeff * Voltage_Transform_Ratio;
+        g_RMS_Value[1] = (custom_sqrt((float)RMS_Sum_Square[1] * inv_sample_count) + Current_Beta_Coeff) * Current_Alpha_Coeff * Current_Transform_Ratio;
+    }
+    else
+    {
+        g_RMS_Value[4] = 0.0f;
+        g_RMS_Value[1] = 0.0f;
+    }
     
-    // // L3 Phase (Voltage[5], Current[2])
-    // if (g_Phase_Active[2])
-    // {
-    //     g_RMS_Value[5] = (custom_sqrt((float)RMS_Sum_Square[5] * inv_sample_count) + Voltage_Beta_Coeff) * Voltage_Alpha_Coeff * Voltage_Transform_Ratio;
-    //     g_RMS_Value[2] = (custom_sqrt((float)RMS_Sum_Square[2] * inv_sample_count) + Current_Beta_Coeff) * Current_Alpha_Coeff * Current_Transform_Ratio;
-    // }
-    // else
-    // {
-    //     g_RMS_Value[5] = 0.0f;
-    //     g_RMS_Value[2] = 0.0f;
-    // }
+    // L3 Phase (Voltage[5], Current[2])
+    if (g_Phase_Active[2])
+    {
+        g_RMS_Value[5] = (custom_sqrt((float)RMS_Sum_Square[5] * inv_sample_count) + Voltage_Beta_Coeff) * Voltage_Alpha_Coeff * Voltage_Transform_Ratio;
+        g_RMS_Value[2] = (custom_sqrt((float)RMS_Sum_Square[2] * inv_sample_count) + Current_Beta_Coeff) * Current_Alpha_Coeff * Current_Transform_Ratio;
+    }
+    else
+    {
+        g_RMS_Value[5] = 0.0f;
+        g_RMS_Value[2] = 0.0f;
+    }
 
     // Bước 2: Tính Active Power - chỉ tính cho phase active
     for (uint16_t sample = 0; sample < g_Sample_Count; sample++)
@@ -306,21 +275,21 @@ void Check_Phase_Timeouts(void *pvParameters)
             g_Phase_Active[phase] = 0;
             
             // Clear all parameters for inactive phase
-            // switch(phase)
-            // {
-            //     case 0: // L1
-            //         g_RMS_Value[3] = 0.0f; // L1 voltage
-            //         g_RMS_Value[0] = 0.0f; // L1 current
-            //         break;
-            //     case 1: // L2
-            //         g_RMS_Value[4] = 0.0f; // L2 voltage
-            //         g_RMS_Value[1] = 0.0f; // L2 current
-            //         break;
-            //     case 2: // L3
-            //         g_RMS_Value[5] = 0.0f; // L3 voltage
-            //         g_RMS_Value[2] = 0.0f; // L3 current
-            //         break;
-            // }
+            switch(phase)
+            {
+                case 0: // L1
+                    g_RMS_Value[3] = 0.0f; // L1 voltage
+                    g_RMS_Value[0] = 0.0f; // L1 current
+                    break;
+                case 1: // L2
+                    g_RMS_Value[4] = 0.0f; // L2 voltage
+                    g_RMS_Value[1] = 0.0f; // L2 current
+                    break;
+                case 2: // L3
+                    g_RMS_Value[5] = 0.0f; // L3 voltage
+                    g_RMS_Value[2] = 0.0f; // L3 current
+                    break;
+            }
             
             g_Active_Power[phase] = 0.0f;
             g_Reactive_Power[phase] = 0.0f;

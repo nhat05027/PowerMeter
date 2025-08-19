@@ -111,7 +111,7 @@ void ADC_Task_Init(uint32_t Sampling_Time)
 }
 
 /* :::::::::: ADC Task ::::::::::::: */
-void ADC_Task(void*)
+void ADC_Task(void)
 {
     // Xử lý tính toán ở đây (ngoài interrupt)
     Process_ADC_Samples();

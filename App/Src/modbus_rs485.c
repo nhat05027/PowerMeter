@@ -29,7 +29,7 @@ void App_ModbusInit(void)
     // - UART port: 1 (USART1)
     // - Baud rate: 9600
     // - Parity: None
-    eStatus = eMBInit(MB_RTU, 1, 1, 9600, MB_PAR_NONE);
+    eStatus = eMBInit(MB_RTU, 8, 1, 9600, MB_PAR_NONE);
     
     if (eStatus == MB_ENOERR)
     {

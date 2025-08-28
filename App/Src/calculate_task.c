@@ -63,6 +63,7 @@ void Calculate_All_Power_Parameters(void)
     // g_RMS_Value[2] = (custom_sqrt((float)RMS_Sum_Square[2] * inv_sample_count) + Current_Beta_Coeff) * Current_Alpha_Coeff * Current_Transform_Ratio;
     // Bước 1: Tính RMS values - chỉ tính cho phase active
     // L1 Phase (Voltage[3], Current[0])
+    g_Phase_Active[1] = 1;
     if (g_Phase_Active[0])
     {
         g_RMS_Value[3] = (custom_sqrt((float)RMS_Sum_Square[3] * inv_sample_count) + Voltage_Beta_Coeff) * Voltage_Alpha_Coeff * Voltage_Transform_Ratio;

@@ -48,7 +48,7 @@
 #define LCD_EN_PORT          GPIOB
 #define LCD_EN_PIN           LL_GPIO_PIN_8
 #define LCD_NRST_PORT        NULL
-#define LCD_NRST_PIN         NULL
+#define LCD_NRST_PIN         0
 
 #define LCD_D0_PORT          GPIOB
 #define LCD_D0_PIN           LL_GPIO_PIN_5

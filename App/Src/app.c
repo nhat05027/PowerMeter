@@ -7,7 +7,7 @@ TG12864_Handle LCD = {
     .cs1 = {LCD_CS1_PORT, LCD_CS1_PIN},
     .cs2 = {LCD_CS2_PORT, LCD_CS2_PIN},
     .e   = {LCD_EN_PORT, LCD_EN_PIN},
-    .rw  = {NULL, NULL},
+    .rw  = {NULL, 0},  // RW pin not used
     .di  = {LCD_DI_PORT, LCD_DI_PIN},
     .rst = {LCD_NRST_PORT, LCD_NRST_PIN},
     .db = {
@@ -25,9 +25,10 @@ TG12864_Handle LCD = {
 static void App_ModbusTask(void *pvParameters);
 static void App_UITask(void *pvParameters);
 static void App_ButtonTask(void *pvParameters);
+static void IWDG_Kick(void *pvParameters);
 
 
-#define         SCHEDULER_TASK_COUNT  6
+#define         SCHEDULER_TASK_COUNT  7
 uint32_t        g_ui32SchedulerNumTasks = SCHEDULER_TASK_COUNT;
 tSchedulerTask 	g_psSchedulerTable[SCHEDULER_TASK_COUNT] =
                 {
@@ -41,7 +42,7 @@ tSchedulerTask 	g_psSchedulerTable[SCHEDULER_TASK_COUNT] =
                     {
                         &App_ModbusTask,
                         (void *) 0,
-                        5000,                          //call every 500ms (2Hz)
+                        2000,                          //call every 500ms (2Hz)
                         0,                          //count from start
                         true                        //is active
                     },
@@ -64,7 +65,7 @@ tSchedulerTask 	g_psSchedulerTable[SCHEDULER_TASK_COUNT] =
                         (void *) 0,
                         10000,                         //call every 1000ms (1Hz) - Phase timeout check
                         0,                          //count from start
-                        true                        //is active
+                        false                        //is active
                     },
                     {
                         &real_data_Task,
@@ -73,20 +74,29 @@ tSchedulerTask 	g_psSchedulerTable[SCHEDULER_TASK_COUNT] =
                         0,                          //count from start
                         true                        //is active
                     },
+                    {
+                        &IWDG_Kick,
+                        (void *) 0,
+                        10000,                         //call every 1000ms (1Hz) - IWDG kick
+                        0,                          //count from start
+                        true                        //is active
+                    },
                 };
 
 void App_Main(void)
 {   
-    // Initialize Modbus slave
-    App_ModbusInit();
-    Modbus_RS485_Init();
     // Initialize ADC task
     // Use 7.5 cycles sampling time for faster response
     ADC_Task_Init(LL_ADC_SAMPLINGTIME_7CYCLES_5);
+
+    // Initialize Modbus slave
+    App_ModbusInit();
+    Modbus_RS485_Init();
     Calculate_Task_Init();
 
     // Initialize scheduler 
     SchedulerInit(10000);  // 10000 ticks per second = 0.1ms per tick
+    
     // Initialize LCD
     TG12864_Init(&LCD);
     
@@ -97,7 +107,6 @@ void App_Main(void)
     UI_Init(&LCD);
 
     spi_task_Init();
-    
 
     while (1)
     {
@@ -248,4 +257,9 @@ static void App_ButtonTask(void *pvParameters)
     Button_Process();
 }
 
-
+static void IWDG_Kick(void *pvParameters)
+{
+    // Suppress unused parameter warning
+    (void)pvParameters;
+    LL_IWDG_ReloadCounter(IWDG);
+}

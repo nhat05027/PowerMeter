@@ -24,7 +24,7 @@ extern int32_t RMS_Sum_Square[6];
 void ADC_Task_Init(uint32_t Sampling_Time);
 
 /* :::::::::: ADC Task ::::::::::::: */
-void ADC_Task(void);
+void ADC_Task(void *pvParameters);
 /* :::::::::: ADC Reset Samples :::::::: */
 void ADC_Reset_Samples(void);
 

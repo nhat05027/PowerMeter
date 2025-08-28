@@ -111,9 +111,8 @@ void ADC_Task_Init(uint32_t Sampling_Time)
 }
 
 /* :::::::::: ADC Task ::::::::::::: */
-void ADC_Task(void)
+void ADC_Task(void *pvParameters)
 {
-    // Xử lý tính toán ở đây (ngoài interrupt)
     Process_ADC_Samples();
     
     if (is_ADC_read_completed == true)
@@ -128,9 +127,8 @@ void ADC_Task_IRQHandler(void)
 {
     if (LL_ADC_IsActiveFlag_EOC(ADC_FEEDBACK_HANDLE) == true)
     {
-        is_ADC_read_completed = true;
         LL_ADC_ClearFlag_EOC(ADC_FEEDBACK_HANDLE);
-
+        is_ADC_read_completed = true;
         uint16_t adc_value = LL_ADC_REG_ReadConversionData12(ADC_FEEDBACK_HANDLE);
 
         // CHỈ ĐỌC RAW VALUES - KHÔNG TÍNH TOÁN

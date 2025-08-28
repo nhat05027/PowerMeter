@@ -12,12 +12,12 @@
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Defines ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 #define MINIMUM_SAMPLE 150
 #define TIMER_HANDLE      TIM16        
-#define TIMER_FREQ_HZ         320000.0f * 0.99f      // Timer chạy ở 310kHz (Prescaler = 100)
+#define TIMER_FREQ_HZ         320000.0f * 0.984f      // Timer chạy ở 310kHz (Prescaler = 100)
 
-#define Voltage_Alpha_Coeff   0.242505f * 1.37f// Vrms * 3.3/(3.3+660+330) * 4096/3.3 = ADC value
+#define Voltage_Alpha_Coeff   0.242505f * 1.01f// Vrms * 3.3/(3.3+660+330) * 4096/3.3 = ADC value
 #define Current_Alpha_Coeff   0.003747f * 1.31f // Irms * 1/2000 * (100+330) * 4096/3.3 = ADC value
-#define Voltage_Beta_Coeff    -3.0f
-#define Current_Beta_Coeff    -3.0f
+#define Voltage_Beta_Coeff    0.0f
+#define Current_Beta_Coeff    0.0f
 
 #define Voltage_Transform_Ratio  1.0f
 #define Current_Transform_Ratio  1.0f

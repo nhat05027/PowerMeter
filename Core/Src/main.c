@@ -54,6 +54,7 @@ static void MX_TIM14_Init(void);
 static void MX_ADC_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_TIM16_Init(void);
+static void MX_IWDG_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -102,6 +103,7 @@ int main(void)
   MX_ADC_Init();
   MX_I2C2_Init();
   MX_TIM16_Init();
+  MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
   App_Main();
   /* USER CODE END 2 */
@@ -143,6 +145,13 @@ void SystemClock_Config(void)
 
   }
   LL_RCC_HSI14_SetCalibTrimming(16);
+  LL_RCC_LSI_Enable();
+
+   /* Wait till LSI is ready */
+  while(LL_RCC_LSI_IsReady() != 1)
+  {
+
+  }
   LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSI_DIV_2, LL_RCC_PLL_MUL_8);
   LL_RCC_PLL_Enable();
 
@@ -348,6 +357,36 @@ static void MX_I2C2_Init(void)
   /* USER CODE BEGIN I2C2_Init 2 */
 
   /* USER CODE END I2C2_Init 2 */
+
+}
+
+/**
+  * @brief IWDG Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_IWDG_Init(void)
+{
+
+  /* USER CODE BEGIN IWDG_Init 0 */
+
+  /* USER CODE END IWDG_Init 0 */
+
+  /* USER CODE BEGIN IWDG_Init 1 */
+
+  /* USER CODE END IWDG_Init 1 */
+  LL_IWDG_Enable(IWDG);
+  LL_IWDG_EnableWriteAccess(IWDG);
+  LL_IWDG_SetPrescaler(IWDG, LL_IWDG_PRESCALER_64);
+  LL_IWDG_SetReloadCounter(IWDG, 2500);
+  while (LL_IWDG_IsReady(IWDG) != 1)
+  {
+  }
+
+  LL_IWDG_ReloadCounter(IWDG);
+  /* USER CODE BEGIN IWDG_Init 2 */
+
+  /* USER CODE END IWDG_Init 2 */
 
 }
 

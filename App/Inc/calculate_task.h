@@ -10,7 +10,7 @@
 #include "adc_task.h"
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Defines ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-#define MINIMUM_SAMPLE 150
+#define MINIMUM_SAMPLE 100
 #define TIMER_HANDLE      TIM16        
 #define TIMER_FREQ_HZ         320000.0f * 0.984f      // Timer chạy ở 310kHz (Prescaler = 100)
 

@@ -1,4 +1,5 @@
 #include "lcd_ui.h"
+#include "rms_statistics.h"
 #include <stddef.h>
 #include "stm32f0xx_ll_gpio.h"
 
@@ -80,6 +81,12 @@ void UI_Refresh(void)
             break;
         case UI_STATUS_PAGE:
             UI_ShowStatusPage();
+            break;
+        case UI_VOLTAGE_STATS_PAGE:
+            UI_ShowVoltageStatsPage();
+            break;
+        case UI_CURRENT_STATS_PAGE:
+            UI_ShowCurrentStatsPage();
             break;
         default:
             break;
@@ -616,5 +623,125 @@ void UI_ShowApparentPage(void)
     else
     {
         TG12864_DrawString_Font(g_lcd, 100, 7, "MAN", &Font5x7);
+    }
+}
+
+// Show voltage statistics page
+void UI_ShowVoltageStatsPage(void)
+{
+    char buffer[16];
+    
+    // Title
+    TG12864_DrawString_Font(g_lcd, 15, UI_TITLE_ROW, "V STATISTICS", &Font5x7);
+    
+    // Draw phase data with MIN/MAX/AVG/DMD
+    for (uint8_t phase = 0; phase < 3; phase++)
+    {
+        uint8_t row = UI_DATA_START_ROW + (phase * UI_PHASE_HEIGHT);
+        
+        // Phase label
+        buffer[0] = 'V';
+        buffer[1] = '1' + phase;
+        buffer[2] = ':';
+        buffer[3] = '\0';
+        TG12864_DrawString_Font(g_lcd, 0, row, buffer, &Font5x7);
+        
+        // Show AVG as main value (matching other pages layout)
+        UI_FloatToString(RMS_Stats_GetChannelAvg(phase), buffer, 1);
+        TG12864_DrawString_Font(g_lcd, 25, row, buffer, &Font5x7);
+        TG12864_DrawString_Font(g_lcd, 65, row, "V", &Font5x7);
+        
+        // Show MIN/MAX on second line
+        UI_FloatToString(RMS_Stats_GetChannelMin(phase), buffer, 1);
+        TG12864_DrawString_Font(g_lcd, 0, row + 1, "MIN:", &Font5x7);
+        TG12864_DrawString_Font(g_lcd, 25, row + 1, buffer, &Font5x7);
+        
+        UI_FloatToString(RMS_Stats_GetChannelMax(phase), buffer, 1);
+        TG12864_DrawString_Font(g_lcd, 50, row + 1, "MAX:", &Font5x7);
+        TG12864_DrawString_Font(g_lcd, 75, row + 1, buffer, &Font5x7);
+    }
+    
+    // Page indicator with auto mode and backlight status
+    if (g_auto_page_mode)
+    {
+        if (g_backlight_enabled)
+        {
+            TG12864_DrawString_Font(g_lcd, 95, 7, "A7/8", &Font5x7);  // Auto mode + backlight
+        }
+        else
+        {
+            TG12864_DrawString_Font(g_lcd, 95, 7, "A7/8*", &Font5x7); // Auto mode + no backlight
+        }
+    }
+    else
+    {
+        if (g_backlight_enabled)
+        {
+            TG12864_DrawString_Font(g_lcd, 105, 7, "7/8", &Font5x7);   // Manual mode + backlight
+        }
+        else
+        {
+            TG12864_DrawString_Font(g_lcd, 105, 7, "7/8*", &Font5x7);  // Manual mode + no backlight
+        }
+    }
+}
+
+// Show current statistics page
+void UI_ShowCurrentStatsPage(void)
+{
+    char buffer[16];
+    
+    // Title
+    TG12864_DrawString_Font(g_lcd, 15, UI_TITLE_ROW, "I STATISTICS", &Font5x7);
+    
+    // Draw phase data with MIN/MAX/AVG/DMD
+    for (uint8_t phase = 0; phase < 3; phase++)
+    {
+        uint8_t row = UI_DATA_START_ROW + (phase * UI_PHASE_HEIGHT);
+        
+        // Phase label
+        buffer[0] = 'I';
+        buffer[1] = '1' + phase;
+        buffer[2] = ':';
+        buffer[3] = '\0';
+        TG12864_DrawString_Font(g_lcd, 0, row, buffer, &Font5x7);
+        
+        // Show AVG as main value (matching other pages layout)
+        UI_FloatToString(RMS_Stats_GetChannelAvg(phase + 3), buffer, 2);
+        TG12864_DrawString_Font(g_lcd, 25, row, buffer, &Font5x7);
+        TG12864_DrawString_Font(g_lcd, 65, row, "A", &Font5x7);
+        
+        // Show MIN/MAX on second line
+        UI_FloatToString(RMS_Stats_GetChannelMin(phase + 3), buffer, 2);
+        TG12864_DrawString_Font(g_lcd, 0, row + 1, "MIN:", &Font5x7);
+        TG12864_DrawString_Font(g_lcd, 25, row + 1, buffer, &Font5x7);
+        
+        UI_FloatToString(RMS_Stats_GetChannelMax(phase + 3), buffer, 2);
+        TG12864_DrawString_Font(g_lcd, 50, row + 1, "MAX:", &Font5x7);
+        TG12864_DrawString_Font(g_lcd, 75, row + 1, buffer, &Font5x7);
+    }
+    
+    // Page indicator with auto mode and backlight status
+    if (g_auto_page_mode)
+    {
+        if (g_backlight_enabled)
+        {
+            TG12864_DrawString_Font(g_lcd, 95, 7, "A8/8", &Font5x7);  // Auto mode + backlight
+        }
+        else
+        {
+            TG12864_DrawString_Font(g_lcd, 95, 7, "A8/8*", &Font5x7); // Auto mode + no backlight
+        }
+    }
+    else
+    {
+        if (g_backlight_enabled)
+        {
+            TG12864_DrawString_Font(g_lcd, 105, 7, "8/8", &Font5x7);   // Manual mode + backlight
+        }
+        else
+        {
+            TG12864_DrawString_Font(g_lcd, 105, 7, "8/8*", &Font5x7);  // Manual mode + no backlight
+        }
     }
 }

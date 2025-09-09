@@ -65,6 +65,7 @@ target_sources(stm32cubemx INTERFACE
     ../../App/Src/spi_task.c
     ../../App/Src/lcd_ui.c
     ../../App/Src/button_handler.c
+    ../../App/Src/rms_statistics.c
     ../../Utils/Scheduler/scheduler.c
     ../../Utils/Spi/spi.c
     ../../Utils/Adc/adc.c

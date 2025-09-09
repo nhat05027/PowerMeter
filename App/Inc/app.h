@@ -21,6 +21,7 @@
 #include "adc_task.h"
 #include "calculate_task.h"
 #include "spi_task.h"
+#include "rms_statistics.h"
 
 // INCLUDE LIB //
 #include "modbus_rs485.h"

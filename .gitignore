@@ -85,3 +85,5 @@ yarn.lock
 
 # ESP32 development files
 esp32/
+#flowchartdrawings
+flowcharts/

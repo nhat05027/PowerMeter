@@ -65,14 +65,14 @@ tSchedulerTask 	g_psSchedulerTable[SCHEDULER_TASK_COUNT] =
                         (void *) 0,
                         10000,                         //call every 1000ms (1Hz) - Phase timeout check
                         0,                          //count from start
-                        false                        //is active
+                        true                        //is active
                     },
                     {
                         &real_data_Task,
                         (void *) 0,
-                        20000,                      //call every 1000ms
+                        20000,                      //call every 2000ms
                         0,                          //count from start
-                        true                        //is active
+                        false                        //is active
                     },
                     {
                         &IWDG_Kick,
@@ -106,8 +106,11 @@ void App_Main(void)
     // Initialize UI system
     UI_Init(&LCD);
 
-    spi_task_Init();
+    // Initialize RMS statistics
+    RMS_Stats_Init();
 
+    spi_task_Init();
+    SchedulerTaskEnable(5, false);
     while (1)
     {
         SchedulerRun();
@@ -207,6 +210,17 @@ static void App_UITask(void *pvParameters)
     
     static uint32_t update_counter = 0;
     static uint8_t page_counter = 0;
+    static uint32_t stats_counter = 0;
+    
+    // Update RMS statistics periodically
+    stats_counter++;
+    
+    // Update statistics every 10 UI cycles (10 seconds at 2Hz)
+    if (stats_counter >= 10)
+    {
+        RMS_Stats_Update();
+        stats_counter = 0;
+    }
     
     // Create real data structure and populate with calculate_task data
     ui_power_data_t real_data;

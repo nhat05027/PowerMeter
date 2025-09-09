@@ -11,7 +11,6 @@ static void UI_HandleLongPress(uint8_t button);
 static TG12864_Handle *g_lcd = NULL;
 static uint8_t g_current_page = UI_VOLTAGE_PAGE;
 static ui_power_data_t g_power_data = {0};
-static uint8_t g_auto_page_mode = 0;  // Auto page switching enabled by default
 static uint8_t g_backlight_enabled = 1;  // Backlight enabled by default
 
 // Configuration variables
@@ -25,7 +24,6 @@ void UI_Init(TG12864_Handle *lcd)
 {
     g_lcd = lcd;
     g_current_page = UI_VOLTAGE_PAGE;
-    g_auto_page_mode = 1;
     
     LL_GPIO_SetOutputPin(LCD_BL_PORT, LCD_BL_PIN);  // Turn on backlight by default
     // Initialize button handler (no callback needed for flag-based approach)
@@ -136,28 +134,14 @@ void UI_ShowVoltagePage(void)
         }
     }
     
-    // Page indicator with auto mode and backlight status
-    if (g_auto_page_mode)
+    // Page indicator with backlight status
+    if (g_backlight_enabled)
     {
-        if (g_backlight_enabled)
-        {
-            TG12864_DrawString_Font(g_lcd, 95, 7, "A1/4", &Font5x7);  // Auto mode + backlight
-        }
-        else
-        {
-            TG12864_DrawString_Font(g_lcd, 95, 7, "A1/4*", &Font5x7); // Auto mode + no backlight
-        }
+        TG12864_DrawString_Font(g_lcd, 105, 7, "1/9", &Font5x7);   // Manual mode + backlight
     }
     else
     {
-        if (g_backlight_enabled)
-        {
-            TG12864_DrawString_Font(g_lcd, 105, 7, "1/4", &Font5x7);   // Manual mode + backlight
-        }
-        else
-        {
-            TG12864_DrawString_Font(g_lcd, 105, 7, "1/4*", &Font5x7);  // Manual mode + no backlight
-        }
+        TG12864_DrawString_Font(g_lcd, 105, 7, "1/9*", &Font5x7);  // Manual mode + no backlight
     }
 }
 
@@ -195,28 +179,14 @@ void UI_ShowCurrentPage(void)
         }
     }
     
-    // Page indicator with auto mode and backlight status
-    if (g_auto_page_mode)
+    // Page indicator with backlight status
+    if (g_backlight_enabled)
     {
-        if (g_backlight_enabled)
-        {
-            TG12864_DrawString_Font(g_lcd, 95, 7, "A2/4", &Font5x7);  // Auto mode + backlight
-        }
-        else
-        {
-            TG12864_DrawString_Font(g_lcd, 95, 7, "A2/4*", &Font5x7); // Auto mode + no backlight
-        }
+        TG12864_DrawString_Font(g_lcd, 105, 7, "2/9", &Font5x7);   // Manual mode + backlight
     }
     else
     {
-        if (g_backlight_enabled)
-        {
-            TG12864_DrawString_Font(g_lcd, 105, 7, "2/4", &Font5x7);   // Manual mode + backlight
-        }
-        else
-        {
-            TG12864_DrawString_Font(g_lcd, 105, 7, "2/4*", &Font5x7);  // Manual mode + no backlight
-        }
+        TG12864_DrawString_Font(g_lcd, 105, 7, "2/9*", &Font5x7);  // Manual mode + no backlight
     }
 }
 
@@ -254,28 +224,14 @@ void UI_ShowPowerPage(void)
         }
     }
     
-    // Page indicator with auto mode and backlight status
-    if (g_auto_page_mode)
+    // Page indicator with backlight status
+    if (g_backlight_enabled)
     {
-        if (g_backlight_enabled)
-        {
-            TG12864_DrawString_Font(g_lcd, 95, 7, "A3/4", &Font5x7);  // Auto mode + backlight
-        }
-        else
-        {
-            TG12864_DrawString_Font(g_lcd, 95, 7, "A3/4*", &Font5x7); // Auto mode + no backlight
-        }
+        TG12864_DrawString_Font(g_lcd, 105, 7, "3/9", &Font5x7);   // Manual mode + backlight
     }
     else
     {
-        if (g_backlight_enabled)
-        {
-            TG12864_DrawString_Font(g_lcd, 105, 7, "3/4", &Font5x7);   // Manual mode + backlight
-        }
-        else
-        {
-            TG12864_DrawString_Font(g_lcd, 105, 7, "3/4*", &Font5x7);  // Manual mode + no backlight
-        }
+        TG12864_DrawString_Font(g_lcd, 105, 7, "3/9*", &Font5x7);  // Manual mode + no backlight
     }
 }
 
@@ -304,28 +260,14 @@ void UI_ShowStatusPage(void)
         TG12864_DrawString_Font(g_lcd, 42, 4, "ERROR", &Font5x7);
     }
     
-    // Page indicator with auto mode and backlight status
-    if (g_auto_page_mode)
+    // Page indicator with backlight status
+    if (g_backlight_enabled)
     {
-        if (g_backlight_enabled)
-        {
-            TG12864_DrawString_Font(g_lcd, 95, 7, "A4/4", &Font5x7);  // Auto mode + backlight
-        }
-        else
-        {
-            TG12864_DrawString_Font(g_lcd, 95, 7, "A4/4*", &Font5x7); // Auto mode + no backlight
-        }
+        TG12864_DrawString_Font(g_lcd, 105, 7, "6/9", &Font5x7);   // Manual mode + backlight
     }
     else
     {
-        if (g_backlight_enabled)
-        {
-            TG12864_DrawString_Font(g_lcd, 105, 7, "4/4", &Font5x7);   // Manual mode + backlight
-        }
-        else
-        {
-            TG12864_DrawString_Font(g_lcd, 105, 7, "4/4*", &Font5x7);  // Manual mode + no backlight
-        }
+        TG12864_DrawString_Font(g_lcd, 105, 7, "6/9*", &Font5x7);  // Manual mode + no backlight
     }
 }
 
@@ -556,7 +498,6 @@ static void UI_HandleShortPress(uint8_t button)
     {
         case BUTTON_UP:
             // Previous page
-            g_auto_page_mode = 0;  // Exit auto mode when navigating
             if (g_current_page > 0)
             {
                 UI_SetCurrentPage(g_current_page - 1);
@@ -569,20 +510,15 @@ static void UI_HandleShortPress(uint8_t button)
             
         case BUTTON_DOWN:
             // Next page
-            g_auto_page_mode = 0;  // Exit auto mode when navigating
             UI_SetCurrentPage((g_current_page + 1) % UI_PAGE_COUNT);
             break;
             
         case BUTTON_SELECT:
-            // Toggle auto page mode
-            g_auto_page_mode = !g_auto_page_mode;
-            UI_Refresh();  // Refresh to show mode change
+            // Reserved for future use
             break;
             
         case BUTTON_BACK:
-            // Re-enable auto page mode (short press)
-            g_auto_page_mode = 1;
-            UI_Refresh();  // Refresh to show mode change
+            // Reserved for future use
             break;
             
         default:
@@ -654,12 +590,6 @@ static void UI_HandleLongPress(uint8_t button)
     }
 }
 
-// Check if auto page mode is enabled
-uint8_t UI_IsAutoPageMode(void)
-{
-    return g_auto_page_mode;
-}
-
 // Set backlight state
 void UI_SetBacklight(uint8_t enable)
 {
@@ -708,6 +638,17 @@ void UI_ShowReactivePage(void)
         TG12864_DrawString_Font(g_lcd, 80, row, "VAR", &Font5x7);
     }
     
+    // Page indicator with backlight status
+    if (g_backlight_enabled)
+    {
+        TG12864_DrawString_Font(g_lcd, 105, 7, "4/9", &Font5x7);   // Manual mode + backlight
+    }
+    else
+    {
+        TG12864_DrawString_Font(g_lcd, 105, 7, "4/9*", &Font5x7);  // Manual mode + no backlight
+    }
+    }
+    
     // Auto/Manual mode indicator
     if (g_auto_page_mode)
     {
@@ -746,14 +687,14 @@ void UI_ShowApparentPage(void)
         TG12864_DrawString_Font(g_lcd, 25, row + 1, buffer, &Font5x7);
     }
     
-    // Auto/Manual mode indicator
-    if (g_auto_page_mode)
+    // Page indicator with backlight status
+    if (g_backlight_enabled)
     {
-        TG12864_DrawString_Font(g_lcd, 100, 7, "AUTO", &Font5x7);
+        TG12864_DrawString_Font(g_lcd, 105, 7, "5/9", &Font5x7);   // Manual mode + backlight
     }
     else
     {
-        TG12864_DrawString_Font(g_lcd, 100, 7, "MAN", &Font5x7);
+        TG12864_DrawString_Font(g_lcd, 105, 7, "5/9*", &Font5x7);  // Manual mode + no backlight
     }
 }
 
@@ -792,28 +733,14 @@ void UI_ShowVoltageStatsPage(void)
         TG12864_DrawString_Font(g_lcd, 75, row + 1, buffer, &Font5x7);
     }
     
-    // Page indicator with auto mode and backlight status
-    if (g_auto_page_mode)
+    // Page indicator with backlight status
+    if (g_backlight_enabled)
     {
-        if (g_backlight_enabled)
-        {
-            TG12864_DrawString_Font(g_lcd, 95, 7, "A7/9", &Font5x7);  // Auto mode + backlight
-        }
-        else
-        {
-            TG12864_DrawString_Font(g_lcd, 95, 7, "A7/9*", &Font5x7); // Auto mode + no backlight
-        }
+        TG12864_DrawString_Font(g_lcd, 105, 7, "7/9", &Font5x7);   // Manual mode + backlight
     }
     else
     {
-        if (g_backlight_enabled)
-        {
-            TG12864_DrawString_Font(g_lcd, 105, 7, "7/9", &Font5x7);   // Manual mode + backlight
-        }
-        else
-        {
-            TG12864_DrawString_Font(g_lcd, 105, 7, "7/9*", &Font5x7);  // Manual mode + no backlight
-        }
+        TG12864_DrawString_Font(g_lcd, 105, 7, "7/9*", &Font5x7);  // Manual mode + no backlight
     }
 }
 
@@ -852,28 +779,14 @@ void UI_ShowCurrentStatsPage(void)
         TG12864_DrawString_Font(g_lcd, 75, row + 1, buffer, &Font5x7);
     }
     
-    // Page indicator with auto mode and backlight status
-    if (g_auto_page_mode)
+    // Page indicator with backlight status
+    if (g_backlight_enabled)
     {
-        if (g_backlight_enabled)
-        {
-            TG12864_DrawString_Font(g_lcd, 95, 7, "A8/9", &Font5x7);  // Auto mode + backlight
-        }
-        else
-        {
-            TG12864_DrawString_Font(g_lcd, 95, 7, "A8/9*", &Font5x7); // Auto mode + no backlight
-        }
+        TG12864_DrawString_Font(g_lcd, 105, 7, "8/9", &Font5x7);   // Manual mode + backlight
     }
     else
     {
-        if (g_backlight_enabled)
-        {
-            TG12864_DrawString_Font(g_lcd, 105, 7, "8/9", &Font5x7);   // Manual mode + backlight
-        }
-        else
-        {
-            TG12864_DrawString_Font(g_lcd, 105, 7, "8/9*", &Font5x7);  // Manual mode + no backlight
-        }
+        TG12864_DrawString_Font(g_lcd, 105, 7, "8/9*", &Font5x7);  // Manual mode + no backlight
     }
 }
 
@@ -941,28 +854,14 @@ void UI_ShowConfigPage(void)
         TG12864_DrawString_Font(g_lcd, 0, 7, "BACK: Exit", &Font5x7);
     }
     
-    // Page indicator
-    if (g_auto_page_mode)
+    // Page indicator with backlight status
+    if (g_backlight_enabled)
     {
-        if (g_backlight_enabled)
-        {
-            TG12864_DrawString_Font(g_lcd, 95, 7, "A9/9", &Font5x7);  // Auto mode + backlight
-        }
-        else
-        {
-            TG12864_DrawString_Font(g_lcd, 95, 7, "A9/9*", &Font5x7); // Auto mode + no backlight
-        }
+        TG12864_DrawString_Font(g_lcd, 105, 7, "9/9", &Font5x7);   // Manual mode + backlight
     }
     else
     {
-        if (g_backlight_enabled)
-        {
-            TG12864_DrawString_Font(g_lcd, 105, 7, "9/9", &Font5x7);   // Manual mode + backlight
-        }
-        else
-        {
-            TG12864_DrawString_Font(g_lcd, 105, 7, "9/9*", &Font5x7);  // Manual mode + no backlight
-        }
+        TG12864_DrawString_Font(g_lcd, 105, 7, "9/9*", &Font5x7);  // Manual mode + no backlight
     }
 }
 

@@ -53,7 +53,6 @@ void UI_Refresh(void);
 void UI_ProcessButtonFlags(void);
 
 // UI state functions
-uint8_t UI_IsAutoPageMode(void);
 void UI_SetBacklight(uint8_t enable);
 uint8_t UI_GetBacklight(void);
 

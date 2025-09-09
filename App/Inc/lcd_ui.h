@@ -7,7 +7,7 @@
 #include "button_handler.h"
 
 // UI Constants
-#define UI_PAGE_COUNT           8
+#define UI_PAGE_COUNT           9
 #define UI_VOLTAGE_PAGE         0
 #define UI_CURRENT_PAGE         1
 #define UI_POWER_PAGE           2
@@ -16,6 +16,7 @@
 #define UI_STATUS_PAGE          5
 #define UI_VOLTAGE_STATS_PAGE   6
 #define UI_CURRENT_STATS_PAGE   7
+#define UI_CONFIG_PAGE          8
 
 // Statistics display modes
 #define UI_STATS_MODE_AVG       0
@@ -65,6 +66,13 @@ void UI_ShowApparentPage(void);
 void UI_ShowStatusPage(void);
 void UI_ShowVoltageStatsPage(void);
 void UI_ShowCurrentStatsPage(void);
+void UI_ShowConfigPage(void);
+
+// Configuration functions
+void UI_SetVTRatio(float ratio);
+void UI_SetCTRatio(float ratio);
+float UI_GetVTRatio(void);
+float UI_GetCTRatio(void);
 
 // Utility functions
 void UI_FloatToString(float value, char *buffer, uint8_t decimal_places);

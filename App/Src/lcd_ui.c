@@ -14,6 +14,12 @@ static ui_power_data_t g_power_data = {0};
 static uint8_t g_auto_page_mode = 0;  // Auto page switching enabled by default
 static uint8_t g_backlight_enabled = 1;  // Backlight enabled by default
 
+// Configuration variables
+static float g_vt_ratio = 1.0f;  // VT ratio (default = 1)
+static float g_ct_ratio = 1.0f;  // CT ratio (default = 1)
+static uint8_t g_config_mode = 0; // 0=VT, 1=CT
+static uint8_t g_config_edit_mode = 0; // 0=view, 1=edit
+
 // Initialize UI system
 void UI_Init(TG12864_Handle *lcd)
 {
@@ -87,6 +93,9 @@ void UI_Refresh(void)
             break;
         case UI_CURRENT_STATS_PAGE:
             UI_ShowCurrentStatsPage();
+            break;
+        case UI_CONFIG_PAGE:
+            UI_ShowConfigPage();
             break;
         default:
             break;
@@ -463,6 +472,86 @@ void UI_ProcessButtonFlags(void)
 // Handle short press events
 static void UI_HandleShortPress(uint8_t button)
 {
+    // Special handling for config page
+    if (g_current_page == UI_CONFIG_PAGE)
+    {
+        switch (button)
+        {
+            case BUTTON_UP:
+                if (g_config_edit_mode)
+                {
+                    // Increase value
+                    if (g_config_mode == 0) // VT ratio
+                    {
+                        g_vt_ratio += 1.0f;
+                        if (g_vt_ratio > 1000.0f) g_vt_ratio = 1000.0f;
+                    }
+                    else // CT ratio
+                    {
+                        g_ct_ratio += 1.0f;
+                        if (g_ct_ratio > 1000.0f) g_ct_ratio = 1000.0f;
+                    }
+                    UI_Refresh();
+                }
+                else
+                {
+                    // Switch between VT and CT
+                    g_config_mode = !g_config_mode;
+                    UI_Refresh();
+                }
+                break;
+                
+            case BUTTON_DOWN:
+                if (g_config_edit_mode)
+                {
+                    // Decrease value
+                    if (g_config_mode == 0) // VT ratio
+                    {
+                        g_vt_ratio -= 1.0f;
+                        if (g_vt_ratio < 1.0f) g_vt_ratio = 1.0f;
+                    }
+                    else // CT ratio
+                    {
+                        g_ct_ratio -= 1.0f;
+                        if (g_ct_ratio < 1.0f) g_ct_ratio = 1.0f;
+                    }
+                    UI_Refresh();
+                }
+                else
+                {
+                    // Switch between VT and CT
+                    g_config_mode = !g_config_mode;
+                    UI_Refresh();
+                }
+                break;
+                
+            case BUTTON_SELECT:
+                // Toggle edit mode
+                g_config_edit_mode = !g_config_edit_mode;
+                UI_Refresh();
+                break;
+                
+            case BUTTON_BACK:
+                if (g_config_edit_mode)
+                {
+                    // Exit edit mode
+                    g_config_edit_mode = 0;
+                    UI_Refresh();
+                }
+                else
+                {
+                    // Exit config page
+                    UI_SetCurrentPage(UI_VOLTAGE_PAGE);
+                }
+                break;
+                
+            default:
+                break;
+        }
+        return;
+    }
+    
+    // Normal page navigation
     switch (button)
     {
         case BUTTON_UP:
@@ -504,6 +593,48 @@ static void UI_HandleShortPress(uint8_t button)
 // Handle long press events
 static void UI_HandleLongPress(uint8_t button)
 {
+    // Special handling for config page - fine adjustment
+    if (g_current_page == UI_CONFIG_PAGE && g_config_edit_mode)
+    {
+        switch (button)
+        {
+            case BUTTON_UP:
+                // Fine increase (0.1 increment)
+                if (g_config_mode == 0) // VT ratio
+                {
+                    g_vt_ratio += 0.1f;
+                    if (g_vt_ratio > 1000.0f) g_vt_ratio = 1000.0f;
+                }
+                else // CT ratio
+                {
+                    g_ct_ratio += 0.1f;
+                    if (g_ct_ratio > 1000.0f) g_ct_ratio = 1000.0f;
+                }
+                UI_Refresh();
+                break;
+                
+            case BUTTON_DOWN:
+                // Fine decrease (0.1 decrement)
+                if (g_config_mode == 0) // VT ratio
+                {
+                    g_vt_ratio -= 0.1f;
+                    if (g_vt_ratio < 1.0f) g_vt_ratio = 1.0f;
+                }
+                else // CT ratio
+                {
+                    g_ct_ratio -= 0.1f;
+                    if (g_ct_ratio < 1.0f) g_ct_ratio = 1.0f;
+                }
+                UI_Refresh();
+                break;
+                
+            default:
+                break;
+        }
+        return;
+    }
+    
+    // Normal long press handling
     switch (button)
     {
         case BUTTON_BACK:
@@ -666,22 +797,22 @@ void UI_ShowVoltageStatsPage(void)
     {
         if (g_backlight_enabled)
         {
-            TG12864_DrawString_Font(g_lcd, 95, 7, "A7/8", &Font5x7);  // Auto mode + backlight
+            TG12864_DrawString_Font(g_lcd, 95, 7, "A7/9", &Font5x7);  // Auto mode + backlight
         }
         else
         {
-            TG12864_DrawString_Font(g_lcd, 95, 7, "A7/8*", &Font5x7); // Auto mode + no backlight
+            TG12864_DrawString_Font(g_lcd, 95, 7, "A7/9*", &Font5x7); // Auto mode + no backlight
         }
     }
     else
     {
         if (g_backlight_enabled)
         {
-            TG12864_DrawString_Font(g_lcd, 105, 7, "7/8", &Font5x7);   // Manual mode + backlight
+            TG12864_DrawString_Font(g_lcd, 105, 7, "7/9", &Font5x7);   // Manual mode + backlight
         }
         else
         {
-            TG12864_DrawString_Font(g_lcd, 105, 7, "7/8*", &Font5x7);  // Manual mode + no backlight
+            TG12864_DrawString_Font(g_lcd, 105, 7, "7/9*", &Font5x7);  // Manual mode + no backlight
         }
     }
 }
@@ -726,22 +857,138 @@ void UI_ShowCurrentStatsPage(void)
     {
         if (g_backlight_enabled)
         {
-            TG12864_DrawString_Font(g_lcd, 95, 7, "A8/8", &Font5x7);  // Auto mode + backlight
+            TG12864_DrawString_Font(g_lcd, 95, 7, "A8/9", &Font5x7);  // Auto mode + backlight
         }
         else
         {
-            TG12864_DrawString_Font(g_lcd, 95, 7, "A8/8*", &Font5x7); // Auto mode + no backlight
+            TG12864_DrawString_Font(g_lcd, 95, 7, "A8/9*", &Font5x7); // Auto mode + no backlight
         }
     }
     else
     {
         if (g_backlight_enabled)
         {
-            TG12864_DrawString_Font(g_lcd, 105, 7, "8/8", &Font5x7);   // Manual mode + backlight
+            TG12864_DrawString_Font(g_lcd, 105, 7, "8/9", &Font5x7);   // Manual mode + backlight
         }
         else
         {
-            TG12864_DrawString_Font(g_lcd, 105, 7, "8/8*", &Font5x7);  // Manual mode + no backlight
+            TG12864_DrawString_Font(g_lcd, 105, 7, "8/9*", &Font5x7);  // Manual mode + no backlight
         }
     }
+}
+
+// Show configuration page
+void UI_ShowConfigPage(void)
+{
+    char buffer[16];
+    
+    // Title
+    TG12864_DrawString_Font(g_lcd, 20, UI_TITLE_ROW, "CONFIG", &Font5x7);
+    
+    // Show current mode (VT or CT)
+    if (g_config_mode == 0)
+    {
+        TG12864_DrawString_Font(g_lcd, 0, 2, "VT RATIO:", &Font5x7);
+        UI_FloatToString(g_vt_ratio, buffer, 1);
+        TG12864_DrawString_Font(g_lcd, 55, 2, buffer, &Font5x7);
+        
+        // Show edit indicator
+        if (g_config_edit_mode)
+        {
+            TG12864_DrawString_Font(g_lcd, 0, 3, ">> EDITING <<", &Font5x7);
+        }
+        else
+        {
+            TG12864_DrawString_Font(g_lcd, 0, 3, "Press SEL to edit", &Font5x7);
+        }
+        
+        // Show CT ratio in smaller text
+        TG12864_DrawString_Font(g_lcd, 0, 5, "CT RATIO:", &Font5x7);
+        UI_FloatToString(g_ct_ratio, buffer, 1);
+        TG12864_DrawString_Font(g_lcd, 55, 5, buffer, &Font5x7);
+    }
+    else
+    {
+        TG12864_DrawString_Font(g_lcd, 0, 2, "CT RATIO:", &Font5x7);
+        UI_FloatToString(g_ct_ratio, buffer, 1);
+        TG12864_DrawString_Font(g_lcd, 55, 2, buffer, &Font5x7);
+        
+        // Show edit indicator
+        if (g_config_edit_mode)
+        {
+            TG12864_DrawString_Font(g_lcd, 0, 3, ">> EDITING <<", &Font5x7);
+        }
+        else
+        {
+            TG12864_DrawString_Font(g_lcd, 0, 3, "Press SEL to edit", &Font5x7);
+        }
+        
+        // Show VT ratio in smaller text
+        TG12864_DrawString_Font(g_lcd, 0, 5, "VT RATIO:", &Font5x7);
+        UI_FloatToString(g_vt_ratio, buffer, 1);
+        TG12864_DrawString_Font(g_lcd, 55, 5, buffer, &Font5x7);
+    }
+    
+    // Instructions
+    if (g_config_edit_mode)
+    {
+        TG12864_DrawString_Font(g_lcd, 0, 6, "UP/DN: +-1.0", &Font5x7);
+        TG12864_DrawString_Font(g_lcd, 0, 7, "LONG: +-0.1", &Font5x7);
+    }
+    else
+    {
+        TG12864_DrawString_Font(g_lcd, 0, 6, "UP/DN: Switch", &Font5x7);
+        TG12864_DrawString_Font(g_lcd, 0, 7, "BACK: Exit", &Font5x7);
+    }
+    
+    // Page indicator
+    if (g_auto_page_mode)
+    {
+        if (g_backlight_enabled)
+        {
+            TG12864_DrawString_Font(g_lcd, 95, 7, "A9/9", &Font5x7);  // Auto mode + backlight
+        }
+        else
+        {
+            TG12864_DrawString_Font(g_lcd, 95, 7, "A9/9*", &Font5x7); // Auto mode + no backlight
+        }
+    }
+    else
+    {
+        if (g_backlight_enabled)
+        {
+            TG12864_DrawString_Font(g_lcd, 105, 7, "9/9", &Font5x7);   // Manual mode + backlight
+        }
+        else
+        {
+            TG12864_DrawString_Font(g_lcd, 105, 7, "9/9*", &Font5x7);  // Manual mode + no backlight
+        }
+    }
+}
+
+// Configuration getter/setter functions
+void UI_SetVTRatio(float ratio)
+{
+    if (ratio >= 1.0f && ratio <= 1000.0f)
+    {
+        g_vt_ratio = ratio;
+    }
+}
+
+void UI_SetCTRatio(float ratio)
+{
+    if (ratio >= 1.0f && ratio <= 1000.0f)
+    {
+        g_ct_ratio = ratio;
+    }
+}
+
+float UI_GetVTRatio(void)
+{
+    return g_vt_ratio;
+}
+
+float UI_GetCTRatio(void)
+{
+    return g_ct_ratio;
 }

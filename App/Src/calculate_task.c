@@ -1,5 +1,6 @@
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Include ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 #include "calculate_task.h"
+#include "lcd_ui.h"
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Defines ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 #define NUM_CHANNELS 6
@@ -62,11 +63,15 @@ void Calculate_All_Power_Parameters(void)
     // g_RMS_Value[5] = (custom_sqrt((float)RMS_Sum_Square[5] * inv_sample_count) + Voltage_Beta_Coeff) * Voltage_Alpha_Coeff * Voltage_Transform_Ratio;
     // g_RMS_Value[2] = (custom_sqrt((float)RMS_Sum_Square[2] * inv_sample_count) + Current_Beta_Coeff) * Current_Alpha_Coeff * Current_Transform_Ratio;
     // Bước 1: Tính RMS values - chỉ tính cho phase active
+    // Get VT and CT ratios from UI configuration
+    float vt_ratio = UI_GetVTRatio();
+    float ct_ratio = UI_GetCTRatio();
+    
     // L1 Phase (Voltage[3], Current[0])
     if (g_Phase_Active[0])
     {
-        g_RMS_Value[3] = (custom_sqrt((float)RMS_Sum_Square[3] * inv_sample_count) + Voltage_Beta_Coeff) * Voltage_Alpha_Coeff * Voltage_Transform_Ratio;
-        g_RMS_Value[0] = (custom_sqrt((float)RMS_Sum_Square[0] * inv_sample_count) + Current_Beta_Coeff) * Current_Alpha_Coeff * Current_Transform_Ratio;
+        g_RMS_Value[3] = (custom_sqrt((float)RMS_Sum_Square[3] * inv_sample_count) + Voltage_Beta_Coeff) * Voltage_Alpha_Coeff * Voltage_Transform_Ratio * vt_ratio;
+        g_RMS_Value[0] = (custom_sqrt((float)RMS_Sum_Square[0] * inv_sample_count) + Current_Beta_Coeff) * Current_Alpha_Coeff * Current_Transform_Ratio * ct_ratio;
     }
     else
     {
@@ -77,8 +82,8 @@ void Calculate_All_Power_Parameters(void)
     // L2 Phase (Voltage[4], Current[1])
     if (g_Phase_Active[1])
     {
-        g_RMS_Value[4] = (custom_sqrt((float)RMS_Sum_Square[4] * inv_sample_count) + Voltage_Beta_Coeff) * Voltage_Alpha_Coeff * Voltage_Transform_Ratio;
-        g_RMS_Value[1] = (custom_sqrt((float)RMS_Sum_Square[1] * inv_sample_count) + Current_Beta_Coeff) * Current_Alpha_Coeff * Current_Transform_Ratio;
+        g_RMS_Value[4] = (custom_sqrt((float)RMS_Sum_Square[4] * inv_sample_count) + Voltage_Beta_Coeff) * Voltage_Alpha_Coeff * Voltage_Transform_Ratio * vt_ratio;
+        g_RMS_Value[1] = (custom_sqrt((float)RMS_Sum_Square[1] * inv_sample_count) + Current_Beta_Coeff) * Current_Alpha_Coeff * Current_Transform_Ratio * ct_ratio;
     }
     else
     {
@@ -89,8 +94,8 @@ void Calculate_All_Power_Parameters(void)
     // L3 Phase (Voltage[5], Current[2])
     if (g_Phase_Active[2])
     {
-        g_RMS_Value[5] = (custom_sqrt((float)RMS_Sum_Square[5] * inv_sample_count) + Voltage_Beta_Coeff) * Voltage_Alpha_Coeff * Voltage_Transform_Ratio;
-        g_RMS_Value[2] = (custom_sqrt((float)RMS_Sum_Square[2] * inv_sample_count) + Current_Beta_Coeff) * Current_Alpha_Coeff * Current_Transform_Ratio;
+        g_RMS_Value[5] = (custom_sqrt((float)RMS_Sum_Square[5] * inv_sample_count) + Voltage_Beta_Coeff) * Voltage_Alpha_Coeff * Voltage_Transform_Ratio * vt_ratio;
+        g_RMS_Value[2] = (custom_sqrt((float)RMS_Sum_Square[2] * inv_sample_count) + Current_Beta_Coeff) * Current_Alpha_Coeff * Current_Transform_Ratio * ct_ratio;
     }
     else
     {
@@ -124,8 +129,8 @@ void Calculate_All_Power_Parameters(void)
             continue;
         }
         
-        // Hoàn thành tính Active Power
-        g_Active_Power[phase] *= inv_sample_count * Voltage_Alpha_Coeff * Current_Alpha_Coeff; // Chia cho số mẫu và nhân với hệ số alpha
+        // Hoàn thành tính Active Power (apply VT and CT ratios)
+        g_Active_Power[phase] *= inv_sample_count * Voltage_Alpha_Coeff * Current_Alpha_Coeff * vt_ratio * ct_ratio; // Chia cho số mẫu và nhân với hệ số alpha và VT/CT ratios
         
         // Tính Apparent Power = V_rms * I_rms
         float v_rms, i_rms;

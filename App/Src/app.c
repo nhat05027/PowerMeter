@@ -253,12 +253,12 @@ static void App_UITask(void *pvParameters)
     UI_ProcessButtonFlags();
     
     // Auto page switching only if auto mode is enabled
-    update_counter++;
-    if (UI_IsAutoPageMode() && (update_counter % 25 == 0)) // Every 5 seconds (25 calls at 200ms)
-    {
-        page_counter = (page_counter + 1) % UI_PAGE_COUNT;
-        UI_SetCurrentPage(page_counter);
-    }
+    // update_counter++;
+    // if (UI_IsAutoPageMode() && (update_counter % 25 == 0)) // Every 5 seconds (25 calls at 200ms)
+    // {
+    //     page_counter = (page_counter + 1) % UI_PAGE_COUNT;
+    //     UI_SetCurrentPage(page_counter);
+    // }
 }
 
 static void App_ButtonTask(void *pvParameters)

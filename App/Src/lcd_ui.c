@@ -647,17 +647,17 @@ void UI_ShowReactivePage(void)
     {
         TG12864_DrawString_Font(g_lcd, 105, 7, "4/9*", &Font5x7);  // Manual mode + no backlight
     }
-    }
+    
     
     // Auto/Manual mode indicator
-    if (g_auto_page_mode)
-    {
-        TG12864_DrawString_Font(g_lcd, 100, 7, "AUTO", &Font5x7);
-    }
-    else
-    {
-        TG12864_DrawString_Font(g_lcd, 100, 7, "MAN", &Font5x7);
-    }
+    // if (g_auto_page_mode)
+    // {
+    //     TG12864_DrawString_Font(g_lcd, 100, 7, "AUTO", &Font5x7);
+    // }
+    // else
+    // {
+    //     TG12864_DrawString_Font(g_lcd, 100, 7, "MAN", &Font5x7);
+    // }
 }
 
 // Show apparent power page
